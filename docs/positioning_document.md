@@ -23,6 +23,13 @@ Synapse Data  builds the biological data mesh that pharma organisations need:
 It executes on this mission by leveraging Databricks, a compliant cloud provider that is popular in pharmaceutical companies for complex, high volume workloads.
 
 
+## Services of Synapse Data
+- Build  data products with DQ enforcement, different refresh patterns and more using best engineering practices
+- Integrate clinical data standards OMOP, CDM, ... so the products speak the language of clinical data teams and comply from the start.
+- Build  GenAI pipelines for structured extraction positioned for regulated environments
+- Implement data governance (audit trails, lineage tracking, ... ) designed for clincal research contexts
+- Design data models that reflect biological and clinical reality.
+
 ## Background of Synapse Data 
 Synapse Data is currently a small consulting firm, founded by Steff Horemans. Steff holds masters in Biophysics from Catholic University of Leuven and a PhD in Life Sciences from the university of Paris-Saclay and more recently a postgraduate in applied AI from the Erasmushogeschool Brussels.
 He has since worked in various data roles, spending two years as a Tableau Developer at Modis (now Akkodis) and four years in data engineering and product owner roles at Atlas Copco (two years of which were as a consultant for Exellys).
