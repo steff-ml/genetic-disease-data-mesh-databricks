@@ -1,0 +1,26 @@
+## Go-to-Market
+
+
+-**Large pharma companies**: You have a mature data organization on Databricks, but you need more people that understand pharma and data analytics to drive your data product initiatives forward and experience difficulties sourcing them internally. In these cases, Synapse Data offers embedded consulting engagements at a fixed day rate.
+
+-**Series A/B rare disease biotechs**:  (€5–50M raised, 10–50 people, have a scientific team but no dedicated data engineering) or **Mid-size pharma data teams (50–500 person companies)**. You have a specific gene or disease area, are starting to accumulate trial and omics data, and cannot afford a large consulting agency. You need someone who understands the biology or can learn quickly and can build reliable data infrastructure. In these cases, Synapse Data offers embedded consulting engagements at a fixed day rate and targets to offer its own data products in the near future based on feedback from the consulting engagements.
+
+-**Academic spin-outs and university hospitals building research data platforms**, particularly those receiving EU Horizon or IMI/IHI grants that require FAIR data deliverables. You are working on a grant-funded project with a defined infrastructure budget and need external expertise without a long-term headcount commitment. In these cases, Synapse Data offers embedded temporary consulting engagements at a fixed day rate.
+
+## Data products
+
+**Who this is for**: Small biotechs and academic groups who need production-quality biological data infrastructure but cannot engage a consulting firm. This segment is structurally underserved, too small for enterprise platform vendors, too specialised for generic cloud providers, and unable to staff the dual scientific-engineering competency internally.
+
+**The model**: Core implementations are open-source. Databricks Marketplace listings provide installable, documented starting points. API access enables programmatic consumption of reference datasets. Non-commercial use is free.
+
+**Why this does not conflict with the consulting business**: The product is the foundation; the consulting is what makes that foundation production-ready, scientifically appropriate for a specific problem, and regulatory defensible in a specific regulated environment. Consulting clients are not paying for templates, they are paying for the scientific domain reasoning that determines whether a given design is right for their context. This model is well-established in pharma data tooling: the [OHDSI community](https://www.ohdsi.org/) built the world's largest network of observational health databases on open-source tooling, with implementation and consulting support sitting entirely on top.
+
+Each consulting engagement produces reusable assets: data product templates, OMOP mappings, extraction pipelines,  that reduce the time and cost of the next engagement. Over time, the most generalisable of these become open-access products distributed via Databricks Marketplace, which serve smaller clients directly and generate inbound interest from organisations that grow into consulting clients. The consulting business builds the IP; the IP builds the pipeline.
+
+## Building Towards
+
+**AI-ready accelerators**: Each consulting engagement contributes to a growing library of reusable assets built for a specific purpose — compressing time-to-AI-readiness rather than rebuilding the same foundations repeatedly. These include OMOP-ready data product templates, data quality frameworks calibrated to genomic and clinical data, GenAI extraction pipelines for biomedical literature, and data mesh scaffolding for Databricks Unity Catalog. The [evidence that AI projects fail at the data layer, not the model layer](https://www.zs.com/insights/scaling-ai-in-pharma-cdio-2026), makes these assets commercially valuable beyond individual engagements.
+
+**Federated architecture frameworks**: The legal constraint that patient-level data cannot be centralized across institutions under GDPR and HIPAA is not going away. Synapse Data is building reusable patterns for federated data architectures,  designs that allow computation to run at the data source, with only aggregated or anonymized results shared centrally. [This is increasingly required for multi-site research and cross-institutional RWE programs](https://www.frontiersin.org/journals/drug-safety-and-regulation/articles/10.3389/fdsfr.2025.1579922/full) and represents a specialisation general data engineering firms are not built for.
+
+**GxP-readiness**: The ability to deliver pipelines that clients can validate under 21 CFR Part 11 and ALCOA+ requirements is a meaningful differentiator in regulated pharma contexts. Synapse Data is deepening this capability through current project work, with the goal of offering validated pipeline frameworks as a defined service, directly addressing the data integrity failures that appear in [60–80% of FDA GMP warning letters](https://www.astrixinc.com/blog/trends-in-fda-data-integrity-483s-and-warning-letters-for-pharmaceutical-companies/).
