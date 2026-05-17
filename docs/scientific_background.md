@@ -345,10 +345,13 @@ The `reading_frame_effect` field in `patient_mutation_profile` is the critical c
 
 **Gold — data products**
 
-| Data product | Contents | Cross-domain dependency |
-|-------------|----------|------------------------|
-| `gold.trial_eligibility_catalogue` | Per-trial structured eligibility rules, versioned | None — self-contained |
-| `gold.patient_trial_eligibility` | Per-patient, per-trial eligibility verdict | Consumes `discovery.gold.patient_mutation_profile` |
+| Data product | Contents | Cross-domain dependency | Business case use case |
+|-------------|----------|------------------------|------------------------|
+| `gold.trial_eligibility_catalogue` | Per-trial structured eligibility rules, versioned | None — self-contained | Patient-trial matching; therapeutic cohort sizing |
+| `gold.patient_trial_eligibility` | Per-patient, per-trial eligibility verdict with mutation-eligible flag, evidence level, and exclusion reasons | Consumes `discovery.gold.patient_mutation_profile` | Patient-trial matching; patient-therapy matching *(filtered to `evidence_level = approved`)* |
+| `gold.therapy_addressable_population` | For each therapy or trial in the catalogue, count and breakdown of patients in `dmd_mutation_catalogue` who meet mutation eligibility criteria | Consumes `discovery.gold.dmd_mutation_catalogue` | Therapeutic cohort sizing |
+| `gold.mutation_coverage_gaps` | Per-mutation-class aggregation: covered by ≥1 approved therapy / covered by ≥1 active trial only / uncovered entirely; patient count per gap | Consumes `discovery.gold.dmd_mutation_catalogue` + `gold.trial_eligibility_catalogue` | Mutation gap analysis |
+| `gold.patient_trial_eligibility_delta` | Row-level delta between consecutive versions of `patient_trial_eligibility` — new matches, lost eligibility due to trial status changes, criteria revisions | Consumes `gold.patient_trial_eligibility` (versioned) | Proactive trial alerts |
 
 ### Cross-domain link
 
