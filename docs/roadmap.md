@@ -1,17 +1,32 @@
 # Roadmap
 
+The roadmap is organized around **data products**, not technology topics. Each gold-layer table is a data product. No product is considered complete until it has a DLT pipeline with expectations, a data contract, Unity Catalog governance, a 21 CFR Part 11 audit trail, and a published specification in `/docs/data-products.md`. Technology is learned in context as each product requires it.
+
+**Data products in build order:**
+1. [`clinical.gold.trial_eligibility_catalogue`](#product-1--clinicalgoldtrial_eligibility_catalogue) — structured trial eligibility rules
+2. [`discovery.gold.dmd_mutation_catalogue`](#product-2--discoverygolddmd_mutation_catalogue) — known DMD variants, classified
+3. [`discovery.gold.patient_mutation_profile`](#product-3--discoverygoldpatient_mutation_profile--discoverygoldexon_skipping_eligibility) + [`discovery.gold.exon_skipping_eligibility`](#product-3--discoverygoldpatient_mutation_profile--discoverygoldexon_skipping_eligibility) — per-patient mutation classification and AON eligibility
+4. [`clinical.gold.patient_trial_eligibility`](#product-4--clinicalgoldpatient_trial_eligibility) — cross-domain patient-trial matching
+5. [`clinical.gold.therapy_addressable_population`](#product-5--remaining-clinical-domain-products) — cohort sizing per therapy
+6. [`clinical.gold.mutation_coverage_gaps`](#product-5--remaining-clinical-domain-products) — unmet need by mutation class
+7. [`clinical.gold.patient_trial_eligibility_delta`](#product-5--remaining-clinical-domain-products) — proactive trial alerts
+
+See [`scientific_background.md`](scientific_background.md) for the full data model and domain map. See [`business_case.md`](business_case.md) for the use cases each product addresses.
+
+---
+
 ## Phase 0 — This week
 Build infrastructure. No public posts yet.
 
 **Do:**
-- [ ] Write positioning document — do not publish
-- [ ] Write LinkedIn headline and about section — do not publish
-- [ ] Create GitHub repository, write and publish README
-- [ ] Draw architecture diagram in Excalidraw, add to README
-- [ ] Write `/docs/scientific-rationale.md` — biology, data model, limitations
-- [ ] Write `/docs/business-case.md` — costs, use cases, disease landscape
+- [X] Write positioning document — do not publish
+- [X] Write LinkedIn headline and about section — do not publish
+- [X] Create GitHub repository, write and publish README
+- [O] Draw architecture diagram in Excalidraw, add to README
+- [-] Write `/docs/scientific_background.md` — biology, data model, limitations
+- [-] Write `/docs/business_case.md` — costs, use cases, disease landscape
 - [ ] Send three warm contact messages — conversation not pitch
-- [ ] Begin GCP course
+- [X] Begin GCP course
 
 **Read:**
 - [FDA Clinical Trial Phases](https://fda.gov/patients/drug-development-process/step-3-clinical-research)
@@ -20,21 +35,32 @@ Build infrastructure. No public posts yet.
 
 ---
 
-## Module 1 — Weeks 1–7
-Build in private. Warm outreach only. No public posts.
+## Product 1 — `clinical.gold.trial_eligibility_catalogue`
 
-### Week 1–2 — GCP and ClinicalTrials.gov
+**What it is:** A versioned, structured catalogue of DMD trial eligibility criteria — mutation requirements, patient-level criteria, phase, status, and intervention type — extracted from ClinicalTrials.gov, the EU register, and FDA approval records. This is the first published data product and the foundation for all clinical domain matching. See [`scientific_background.md` — Clinical domain gold layer](scientific_background.md) and [`business_case.md` — Patient-Trial Matching](business_case.md).
+
+**Build in private. Launch publicly at Week 8. Scope: trial eligibility catalogue only — patient-trial matching (which requires the discovery domain) is Product 4.**
+
+### Definition of Done
+- [ ] DLT pipeline with expectations and quarantine table
+- [ ] Data contract: schema, update frequency (weekly), SLA, license terms
+- [ ] Unity Catalog: access controls, sensitivity tags, lineage source → gold
+- [ ] 21 CFR Part 11 compatible audit trail on all write operations
+- [ ] Data quality monitoring table
+- [ ] Model card for GenAI extraction component (EU AI Act positioning, error rates, human review requirement)
+- [ ] Entry in `/docs/data-products.md`
+- [ ] Changelog entry
+
+### Week 1–2 — GCP and bronze ingestion
 
 **Do:**
 - [ ] Complete GCP course — mandatory before any public content
 - [ ] Read ClinicalTrials.gov API documentation fully
 - [ ] Explore 10 Duchenne trials manually before writing code
-- [ ] Build paginated ingestion pipeline
-- [ ] Bronze layer: raw API responses
-- [ ] Silver layer: structured typed columns, incremental update logic
-- [ ] Data quality checks: missing eligibility, missing dates, missing phase
+- [ ] Build paginated ClinicalTrials.gov ingestion pipeline
+- [ ] Bronze layer: raw API responses, incremental by last-updated date
 - [ ] Document every data quality problem found
-- [ ] Delta tables: `bronze_clinical_trials_raw`, `silver_clinical_trials_dmd`, `silver_trial_quality_metrics`
+- [ ] Delta tables: `bronze.clinicaltrials_raw`, `bronze.eu_trials_raw`, `bronze.fda_approvals_raw`
 
 **Read:**
 - [FreeGCP](https://freegcp.com/tracks/gcp) *(pick one)*
@@ -43,47 +69,37 @@ Build in private. Warm outreach only. No public posts.
 - [ClinicalTrials.gov API](https://clinicaltrials.gov/data-api/api)
 - [Study Data Structure](https://clinicaltrials.gov/data-api/about-api/study-data-structure)
 
-**Post (publish at week 8):**
-- "What Duchenne clinical trial data actually looks like: findings from ingesting 150 trials"
-
----
-
-### Week 3 — OMOP
+### Week 3 — Silver layer and clinical standards
 
 **Do:**
 - [ ] Read 21 CFR Part 11 guidance document
 - [ ] Read Book of OHDSI chapters 1–5
-- [ ] Read Databricks OMOP solution accelerator
-- [ ] Download CDISC pilot dataset — open DM and AE domains
+- [ ] Filter to DMD trials; extract intervention type, phase, status
 - [ ] Set up OMOP 5.3.1 schema on Delta Lake
 - [ ] Map trial conditions to OMOP Condition domain using Athena SNOMED concepts
 - [ ] Map trial interventions to OMOP Drug domain
-- [ ] Document mapping gaps explicitly
-- [ ] Delta tables: `omop_condition_occurrence_dmd`, `omop_drug_exposure_dmd`, `omop_mapping_coverage_report`
+- [ ] Document mapping gaps explicitly — note where OMOP has no concept for rare disease terms
+- [ ] Explore CDISC pilot dataset DM and AE domains — understand the standard before encountering it in D-RSC data
+- [ ] Delta tables: `silver.trials_dmd`, `omop.condition_occurrence_dmd`, `omop.drug_exposure_dmd`, `omop.mapping_coverage_report`
 
 **Read:**
 - [Book of OHDSI](https://ohdsi.github.io/TheBookOfOhdsi)
 - [Databricks OMOP Accelerator](https://github.com/databricks-industry-solutions/omop-cdm)
 - [OHDSI Athena](https://athena.ohdsi.org)
-- [OHDSI Forums](https://forums.ohdsi.org)
 - [21 CFR Part 11](https://fda.gov/regulatory-information/search-fda-guidance-documents/part-11-electronic-records-electronic-signatures-scope-and-application)
+- [CDISC Pilot Datasets](https://github.com/cdisc-org/sdtm-adam-pilot-project)
 
-**Post (publish at week 8):**
-- "Mapping Duchenne clinical trial data to OMOP CDM on Databricks: what maps, what doesn't, and what rare disease reveals about OMOP's limits"
-
----
-
-### Week 4 — Mutation Registry Exploration and EU AI Act
-Groundwork for the genomics layer. No pipeline code this week — exploration and schema planning only.
+### Week 4 — Mutation registry exploration and EU AI Act
+*No pipeline code this week — exploration and schema planning only. Groundwork for Product 2.*
 
 **Do:**
 - [ ] Read EU AI Act overview
 - [ ] Explore LOVD DMD database manually — understand export format, field structure, identifier conventions
 - [ ] Download LOVD DMD export and inspect raw data
-- [ ] Explore TREAT-NMD registry documentation — understand what data is publicly accessible
-- [ ] Read HGVS nomenclature basics — understand `c.`, `p.`, `g.` notation and how LOVD uses it
+- [ ] Explore TREAT-NMD registry documentation — understand what is publicly accessible
+- [ ] Read HGVS nomenclature basics — `c.`, `p.`, `g.` notation and how LOVD uses it
 - [ ] Draft bronze schema for LOVD ingestion: field names, types, nullability, known quality issues
-- [ ] Document open questions about LOVD data before building in Module 2
+- [ ] Document open questions about LOVD data before building in Product 2
 
 **Read:**
 - [EU AI Act](https://artificialintelligenceact.eu)
@@ -91,141 +107,144 @@ Groundwork for the genomics layer. No pipeline code this week — exploration an
 - [HGVS Nomenclature](https://varnomen.hgvs.org)
 - [TREAT-NMD Registry](https://treat-nmd.org/research-overview/dmd-research-overview)
 
-*Note: FHIR integration is deferred to Module 4 as an architecture decision record. FHIR is relevant for future EHR integration but is not on the critical path for Products 1 or 2.*
+*Note: FHIR integration is deferred to the platform phase as an architecture decision record. FHIR is relevant for future EHR integration but is not on the critical path for any of the first four products.*
 
----
-
-### Week 5 — CDISC and Delta Live Tables
-
-**Do:**
-- [ ] Read SDTM implementation guide introduction
-- [ ] Open CDISC pilot dataset DM, AE, CM, EX domains — read the actual data
-- [ ] Build SDTM to OMOP mapping for DM and CM domains
-- [ ] Refactor ClinicalTrials.gov pipeline as DLT pipeline
-- [ ] Add DLT expectations: NCT ID format, date ranges, required fields, eligibility criteria length
-- [ ] Implement quarantine table for failed records
-- [ ] Delta tables: `sdtm_dm_mapped`, `sdtm_cm_mapped`, `sdtm_omop_lineage`, `quarantine_failed_trials`
-
-**Read:**
-- [CDISC SDTM](https://cdisc.org/standards/foundational/sdtm)
-- [CDISC Pilot Datasets](https://github.com/cdisc-org/sdtm-adam-pilot-project)
-- [Delta Live Tables Documentation](https://docs.databricks.com/en/delta-live-tables/index.html)
-
-**Posts (publish at weeks 9–10):**
-- "CDISC SDTM for data engineers: mapping clinical trial submission data to OMOP on Databricks"
-- "Using Delta Live Tables for clinical data quality: enforcing expectations on biomedical pipelines"
-
----
-
-### Week 6 — Compliant GenAI Extraction
-Most important week. This builds Product 1.
+### Week 5 — GenAI extraction pipeline
+*Most important week. This extracts structured eligibility rules from free-text criteria.*
 
 **Do:**
 - [ ] Hand-label 20 Duchenne eligibility criteria — do this before writing any code
 - [ ] Build extraction pipeline: mutation requirements, exon numbers, therapy eligibility, functional status, age, exclusion criteria
-- [ ] Ground extracted entities to controlled vocabulary
+- [ ] Ground extracted entities to controlled vocabulary (OMOP, HPO, Layer 1 mutation taxonomy)
 - [ ] Add confidence scoring per field using secondary verification prompt
 - [ ] Flag low-confidence extractions for human review
 - [ ] Evaluate against gold standard: precision and recall per field
 - [ ] Version the prompt: store prompt hash, model version, extraction timestamp in every record
-- [ ] Write model card: what it does, error rates, human review requirement, intended use, EU AI Act positioning
-- [ ] Write Product 1 specification: schema, update frequency, license terms, limitation statement
-- [ ] Delta tables: `silver_trial_eligibility_structured`, `extraction_evaluation_metrics`
+- [ ] Delta tables: `silver.eligibility_criteria`, `silver.extraction_evaluation_metrics`
 
 **Read:**
 - [Anthropic Prompt Engineering](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview)
 - [Model Card Format (Mitchell et al., 2019)](https://arxiv.org/abs/1810.03993)
 
-**Posts (publish at week 10):**
-- "Building compliant GenAI pipelines for clinical text: confidence scoring, validation, and audit trails"
-- "Using LLMs to extract structured eligibility criteria from clinical trials: methodology, evaluation, and lessons"
-
----
-
-### Week 7 — Governance and Module 1 Completion
+### Week 6 — DLT pipeline and data quality
 
 **Do:**
-- [ ] Implement Unity Catalog governance across all Module 1 tables
-- [ ] Column-level access controls on sensitive fields
-- [ ] Data lineage tracking source to output
-- [ ] Tags: sensitivity, source, clinical relevance
-- [ ] Implement 21 CFR Part 11 compatible audit trail
-- [ ] Write data contracts for three core datasets
-- [ ] Write five architecture decision records
-- [ ] Write `/docs/model-card.md`
-- [ ] Write `/docs/data-products.md` with Product 1 specification
-- [ ] Write `/docs/data-quality.md` covering Module 1 sources
-- [ ] Set up Claude Code automation for changelog and data quality updates
-- [ ] Delta table: `data_quality_monitoring`
+- [ ] Refactor all silver pipelines as DLT pipelines
+- [ ] Add DLT expectations: NCT ID format, date ranges, required fields, eligibility criteria length, extraction confidence thresholds
+- [ ] Implement quarantine table for failed records
+- [ ] Build data quality monitoring table with freshness, completeness, and extraction confidence metrics
+- [ ] Delta tables: `quarantine.failed_trials`, `monitoring.data_quality_trial_eligibility`
+
+**Read:**
+- [Delta Live Tables Documentation](https://docs.databricks.com/en/delta-live-tables/index.html)
+- [CDISC SDTM](https://cdisc.org/standards/foundational/sdtm)
+
+### Week 7 — Gold layer, governance, and Product 1 completion
+
+**Do:**
+- [ ] Publish `clinical.gold.trial_eligibility_catalogue` with versioning and lineage
+- [ ] Implement Unity Catalog governance: access controls, sensitivity tags, lineage tracking
+- [ ] Implement 21 CFR Part 11 compatible audit trail on all write operations
+- [ ] Write data contract for `trial_eligibility_catalogue`: schema, SLA, update frequency, license terms
+- [ ] Write model card for the GenAI extraction component
+- [ ] Write Product 1 specification in `/docs/data-products.md`
+- [ ] Write two architecture decision records: GenAI extraction approach; OMOP standard selection
+- [ ] Write `/docs/data-quality.md` covering Product 1 sources
+- [ ] Changelog entry
 
 **Read:**
 - [Unity Catalog](https://docs.databricks.com/en/data-governance/unity-catalog/index.html)
 - [Bitol Open Data Contract Standard](https://bitol-io.github.io/open-data-contract-standard)
 - [ADR Format](https://adr.github.io)
-- [Claude Code](https://docs.anthropic.com/en/docs/claude-code)
 
-**Posts:**
-- "Five decisions I made designing a compliant rare disease data platform — and why" (publish at week 10)
-- "Unity Catalog for biomedical data governance: implementing 21 CFR Part 11 audit trail requirements on Databricks" (publish later)
-
----
-
-### Week 8 — Public Launch
-Everything goes live simultaneously.
+### Week 8 — Public launch
 
 **Do:**
 - [ ] Publish LinkedIn profile
 - [ ] Publish positioning post
-- [ ] Launch Product 1 — structured Duchenne trial eligibility catalogue (scope: trial eligibility criteria only; patient-trial matching requires Product 2)
+- [ ] Launch Product 1 — `clinical.gold.trial_eligibility_catalogue` (trial eligibility catalogue; patient-trial matching requires Product 4)
 - [ ] Cross-post OMOP content to OHDSI forums
 - [ ] Send direct outreach to warm contacts referencing the launch
 
 **Posts published this week:**
-- Post 1: "I've spent seven weeks building a compliant clinical data platform for Duchenne — here's what I learned and what I'm launching"
-- Post 2: ClinicalTrials.gov findings
+- "I've spent seven weeks building a compliant clinical data platform for Duchenne — here's what I learned and what I'm launching"
+- "What Duchenne clinical trial data actually looks like: findings from ingesting 150 trials"
 - Product 1 launch post
 
----
+**Posts queued (publish weeks 9–10):**
+- "Mapping Duchenne clinical trial data to OMOP CDM on Databricks: what maps, what doesn't, and what rare disease reveals about OMOP's limits" *(cross-post to OHDSI forums)*
+- "Building compliant GenAI pipelines for clinical text: confidence scoring, validation, and audit trails"
+- "Using LLMs to extract structured eligibility criteria from clinical trials: methodology, evaluation, and lessons"
+- "GCP and compliance for data engineers"
+- "Unity Catalog for biomedical data governance: implementing 21 CFR Part 11 audit trail requirements on Databricks"
 
-### Weeks 9–10 — Remaining Module 1 Posts
-
-**Posts published:**
-- Post 3: OMOP mapping on Databricks — cross-post to OHDSI
-- Post 4: GCP and compliance for data engineers
-- Post 5: Compliant GenAI for clinical text
-- Post 6: Five architecture decisions
-
-**Outreach:** After Post 3 is live on OHDSI forums, begin direct LinkedIn outreach to clinical data managers, data leads at rare disease foundations, research data engineers at academic consortia. Three messages per week minimum.
+**Outreach:** After OMOP post is live on OHDSI forums, begin direct LinkedIn outreach to clinical data managers, data leads at rare disease foundations, research data engineers at academic consortia. Three messages per week minimum.
 
 ---
 
-## Module 2 — Weeks 8–12
-Genomics layer. One lesson per week. One post per lesson.
+## Product 2 — `discovery.gold.dmd_mutation_catalogue`
+
+**What it is:** A clean, deduplicated, annotated catalogue of all known DMD variants — normalized to HGVS, mapped to exon reference coordinates, classified for pathogenicity, and enriched with population frequency. This is the foundation for all discovery domain products. See [`scientific_background.md` — Discovery domain gold layer](scientific_background.md) and [`business_case.md` — Therapy Eligibility Gaps](business_case.md).
+
+### Definition of Done
+- [ ] DLT pipeline with expectations and quarantine table
+- [ ] Data contract: schema, update frequency, SLA, license terms
+- [ ] Unity Catalog: access controls, sensitivity tags, lineage
+- [ ] 21 CFR Part 11 compatible audit trail
+- [ ] Data quality monitoring table
+- [ ] Reading frame calculator validated against [Aartsma-Rus et al. (2009)](https://pubmed.ncbi.nlm.nih.gov/19156838/) reference set — do not proceed to Product 3 until this passes
+- [ ] Entry in `/docs/data-products.md`
+- [ ] Changelog entry
+
+### Weeks 9–10 — Genomic reference foundation and LOVD bronze ingestion
 
 **Do:**
-- [ ] FASTA and reference genomes — Ensembl REST API, assembly detection function
-- [ ] LOVD DMD ingestion — build bronze ingestion pipeline, handle export format, document data quality issues
+- [ ] Ingest DMD transcript and exon coordinates from Ensembl REST API
+- [ ] Build exon reference table: exon number, genomic coordinates, size (bp), reading frame contribution (0/1/2 mod 3)
+- [ ] Build and unit-test reading frame calculator: given a list of deleted/duplicated exon numbers, return in-frame / out-of-frame
+- [ ] Cross-validate reading frame calculator against Leiden MD pages and Aartsma-Rus et al. (2009) — **hard gate before Product 3**
+- [ ] FASTA and reference genomes — Ensembl REST API, assembly detection, GRCh38 alignment
+- [ ] Build LOVD DMD bronze ingestion pipeline — handle export format, document quality issues
+- [ ] Delta tables: `bronze.ensembl_exons_raw`, `bronze.lovd_variants_raw`, `silver.exon_reference`
+
+**Read:**
+- [GATK VCF Format](https://gatk.broadinstitute.org/hc/en-us/articles/360035531692-VCF-Variant-Call-Format)
+- [Ensembl REST API](https://rest.ensembl.org)
+- [Leiden MD Pages — exon sizes and reading frame table](https://www.dmd.nl)
+- [Johns Hopkins Genomics — Coursera](https://coursera.org/learn/genomic-tools)
+
+### Weeks 11–12 — ClinVar ingestion, HGVS normalization, variant enrichment
+
+**Do:**
 - [ ] VCF ingestion in PySpark — ClinVar DMD variants, multi-allelic handling, partitioning
 - [ ] HGVS normalisation — Mutalyzer API, mixed format inputs, quality report
+- [ ] Deduplicate variants across LOVD and ClinVar — handle identifier conflicts
 - [ ] Ensembl VEP annotation — CSQ field parsing, MANE Select flagging
 - [ ] gnomAD frequency enrichment — API, novel variants, popmax, rate limiting
 - [ ] ACMG classification modelling — conflict detection, star ratings, multi-submitter handling
-- [ ] BED/GTF exon annotations — DMD exon coordinates, reading frame, skipping amenability
-- [ ] Delta tables: `bronze_lovd_variants_raw`, `silver_lovd_variants_dmd`
+- [ ] Delta tables: `bronze.clinvar_submissions_raw`, `silver.dmd_variants`, `silver.variant_classification`
 
 **Read:**
-- [HGVS Nomenclature](https://varnomen.hgvs.org)
 - [Mutalyzer](https://mutalyzer.nl)
-- [GATK VCF Format](https://gatk.broadinstitute.org/hc/en-us/articles/360035531692-VCF-Variant-Call-Format)
 - [Annotating Variation with VEP — EBI Webinar](https://ebi.ac.uk/training/events/annotating-your-own-variation-data-ensembl-variant-effect-predictor-vep)
-- [Ensembl REST API](https://rest.ensembl.org)
 - [gnomAD](https://gnomad.broadinstitute.org)
 - [ClinVar](https://ncbi.nlm.nih.gov/clinvar)
 - [ACMG Guidelines](https://ncbi.nlm.nih.gov/pmc/articles/PMC4544753)
-- [Johns Hopkins Genomics — Coursera](https://coursera.org/learn/genomic-tools)
 - [CBW Bioinformatics Materials](https://bioinformaticsdotca.github.io)
 
-**Posts:**
+### Week 13 — DLT, governance, and Product 2 completion
+
+**Do:**
+- [ ] Refactor all Product 2 silver pipelines as DLT pipelines with expectations and quarantine
+- [ ] DQ expectations: HGVS format validation, exon number range, ClinVar star rating, gnomAD frequency bounds
+- [ ] Publish `discovery.gold.dmd_mutation_catalogue`
+- [ ] Implement Unity Catalog governance for discovery domain
+- [ ] Write data contract for `dmd_mutation_catalogue`
+- [ ] Write two architecture decision records: HGVS normalization approach; variant deduplication strategy
+- [ ] Update `/docs/data-products.md` with Product 2 specification
+- [ ] Delta tables: `discovery.gold.dmd_mutation_catalogue`, `monitoring.data_quality_mutation_catalogue`
+
+**Posts that come out of Product 2 (publish weeks 9–13):**
 - "The reference genome problem: why GRCh37 vs GRCh38 is the silent data quality killer"
 - "Building a production VCF ingestion pipeline in PySpark on Databricks"
 - "Variant naming as a data quality problem: HGVS normalisation in rare disease genomics"
@@ -236,81 +255,160 @@ Genomics layer. One lesson per week. One post per lesson.
 
 ---
 
-## Module 3 — Weeks 13–17
-Linkage layer. Product 2 built here.
+## Product 3 — `discovery.gold.patient_mutation_profile` + `discovery.gold.exon_skipping_eligibility`
+
+**What it is:** Per-patient mutation classification using the Layer 1 schema from [`scientific_background.md`](scientific_background.md) — variant class, exons affected, computed reading frame effect, hotspot region, stop codon type — plus computed boolean AON eligibility flags for each of the four approved exon-skipping targets (51, 53, 45, 44). This is the cross-domain interface data product consumed by all clinical domain matching products.
+
+*Prerequisite: reading frame calculator validated (Product 2 Definition of Done gate).*
+
+### Definition of Done
+- [ ] DLT pipeline with expectations and quarantine
+- [ ] Data contract for `patient_mutation_profile` — schema, versioning policy, breaking-change protocol (the Clinical domain depends on this contract)
+- [ ] Unity Catalog: access controls, sensitivity tags, lineage
+- [ ] 21 CFR Part 11 compatible audit trail
+- [ ] Data quality monitoring
+- [ ] OMOP Genomic CDM extension tables populated
+- [ ] Entry in `/docs/data-products.md`
+- [ ] Changelog entry
+
+### Weeks 14–15 — Layer 1 classification and exon skipping eligibility
 
 **Do:**
-- [ ] Read TREAT-NMD DMD mutation database documentation
-- [ ] Understand reading frame rule and exon skipping amenability in depth
-- [ ] Build reading frame calculator
-- [ ] Validate reading frame calculator against published reference set (Aartsma-Rus et al., 2009) before building linkage layer — do not proceed until this passes
-- [ ] Build exon skipping amenability classifier
-- [ ] Build variant-to-trial eligibility linkage layer
-- [ ] Build OMOP extension for genomic data
-- [ ] Write Product 2 specification and model card
-- [ ] Launch Product 2 after centrepiece post
-- [ ] Delta tables: `reference_exon_skipping_amenability`, `gold_variant_trial_eligibility`, `gold_eligibility_summary`, `omop_ext_genomic_variant`
+- [ ] Apply Layer 1 classification to each variant in `dmd_mutation_catalogue`: variant class, exons affected, hotspot region, stop codon type
+- [ ] Compute `reading_frame_effect` using validated calculator — this must be a computed field, never manually annotated
+- [ ] Compute exon skipping eligibility flags for exons 51, 53, 45, 44 with reasoning trace per patient
+- [ ] Build OMOP Genomic CDM extension: `GENOMIC_TEST`, `TARGET_GENE`, `VARIANT_OCCURRENCE`, `VARIANT_ANNOTATION`
+- [ ] Publish `discovery.gold.patient_mutation_profile` and `discovery.gold.exon_skipping_eligibility`
+- [ ] Write data contract for `patient_mutation_profile` — including versioning and breaking-change notification protocol for Clinical domain consumers
+- [ ] Write one architecture decision record: OMOP G-CDM vs HGVS/GA4GH VRS for variant representation
+- [ ] Update `/docs/data-products.md`
 
 **Read:**
-- [TREAT-NMD](https://treat-nmd.org/research-overview/dmd-research-overview)
+- [OHDSI Genomics Working Group](https://ohdsi.org/web/wiki/doku.php?id=projects:workgroups:genomics-wg)
+- [OMOP Genomic CDM](https://github.com/OHDSI/Genomic-CDM)
+- [GA4GH VRS](https://vrs.ga4gh.org)
 - [PPMD Approved Drugs](https://parentprojectmd.org/care/for-adults/fda-approved-drugs)
 - [LOVD DMD](https://databases.lovd.nl/shared/genes/DMD)
-- [OHDSI Genomics Working Group](https://ohdsi.org/web/wiki/doku.php?id=projects:workgroups:genomics-wg)
 
-**Posts:**
+**Posts that come out of Product 3:**
 - "Encoding the reading frame rule as a data model: the biology behind Duchenne therapy eligibility" *(TREAT-NMD outreach trigger)*
-- "Linking genetic variants to clinical trial eligibility: the complete data model for Duchenne exon skipping" *(centrepiece post)*
 - "Extending OMOP CDM for rare disease genomics: a practical approach for Duchenne" *(OHDSI forum post)*
-- Product 2 launch post
 
 **Outreach trigger:** After the reading frame post is published, initiate TREAT-NMD outreach.
 
 ---
 
-## Module 4 — Weeks 18–20
-Platform architecture. Final documentation.
+## Product 4 — `clinical.gold.patient_trial_eligibility`
+
+**What it is:** The primary cross-domain data product. Per-patient, per-trial eligibility verdict — mutation-eligible flag, patient-eligible flag (nullable until clinical record input), evidence level (approved / active trial / completed / experimental), and exclusion reasons. Consumes `discovery.gold.patient_mutation_profile` as a cross-domain dependency. Enables the Patient-Trial Matching and Patient-Therapy Matching use cases from [`business_case.md`](business_case.md).
+
+### Definition of Done
+- [ ] DLT pipeline with expectations and quarantine
+- [ ] Data contract: schema, cross-domain dependency on `patient_mutation_profile` v{n} pinned, SLA
+- [ ] Unity Catalog: access controls, sensitivity tags, lineage across domain boundary
+- [ ] 21 CFR Part 11 compatible audit trail
+- [ ] Data quality monitoring
+- [ ] Entry in `/docs/data-products.md`
+- [ ] Changelog entry
+
+### Weeks 16–17 — Cross-domain join and eligibility rule engine
 
 **Do:**
-- [ ] Write formal data contracts for all three core datasets
-- [ ] Implement schema enforcement in Delta Lake
-- [ ] Complete Unity Catalog governance implementation
-- [ ] Write all five ADRs — include FHIR integration as ADR: future EHR integration via FHIR R4, deferred from Module 1 critical path
-- [ ] Write `/docs/contributing.md`
-- [ ] Write `/docs/glossary.md`
-- [ ] Write `/docs/changelog.md`
-- [ ] Write `/docs/setup.md`
+- [ ] Subscribe to `discovery.gold.patient_mutation_profile` as a cross-domain data product — pin contract version
+- [ ] Apply Layer 2 mutation eligibility rules from `trial_eligibility_catalogue` against patient profiles
+- [ ] Add Layer 3 patient-level criteria fields (AAV antibody status, age, ambulatory status) — initially nullable, to be populated from clinical records
+- [ ] Add `evidence_level` field and `exclusion_reasons[]` array
+- [ ] Implement versioned output — each run produces a new version for delta computation in Product 7
+- [ ] Publish `clinical.gold.patient_trial_eligibility`
+- [ ] Write data contract pinning the cross-domain dependency
+- [ ] Write one architecture decision record: cross-domain data product subscription pattern
+- [ ] Update `/docs/data-products.md`
+
+**Posts that come out of Product 4:**
+- "Linking genetic variants to clinical trial eligibility: the complete data model for Duchenne exon skipping" *(centrepiece post)*
+- Product 4 launch post
+
+---
+
+## Product 5 — Remaining Clinical Domain Products
+
+**What they are:** Three analytical products built on top of Products 1–4. Each addresses a distinct business case use case from [`business_case.md`](business_case.md).
+
+| Product | Use case | Cross-domain dependencies |
+|---------|----------|--------------------------|
+| `clinical.gold.therapy_addressable_population` | Therapeutic Cohort Sizing | `discovery.gold.dmd_mutation_catalogue` + `gold.trial_eligibility_catalogue` |
+| `clinical.gold.mutation_coverage_gaps` | Mutation Gap Analysis | `discovery.gold.dmd_mutation_catalogue` + `gold.trial_eligibility_catalogue` |
+| `clinical.gold.patient_trial_eligibility_delta` | Proactive Trial Alerts | `gold.patient_trial_eligibility` (versioned) |
+
+### Definition of Done (each product)
+- [ ] DLT pipeline with expectations and quarantine
+- [ ] Data contract with pinned upstream dependencies
+- [ ] Unity Catalog: access controls, lineage
+- [ ] 21 CFR Part 11 compatible audit trail
+- [ ] Data quality monitoring
+- [ ] Entry in `/docs/data-products.md`
+- [ ] Changelog entry
+
+### Weeks 18–19 — Build, govern, and publish
+
+**Do:**
+- [ ] Build `therapy_addressable_population`: reverse-direction eligibility query from therapy inward against `dmd_mutation_catalogue`
+- [ ] Build `mutation_coverage_gaps`: aggregate by mutation class, flag zero-approved and zero-active-trial classes
+- [ ] Build `patient_trial_eligibility_delta`: row-level diff between consecutive versions of `patient_trial_eligibility` — new matches, lost eligibility, criteria revisions
+- [ ] Apply Definition of Done checklist to each product
+- [ ] Update `/docs/data-products.md`
+
+**Posts that come out of Product 5:**
+- "Writing data contracts for biomedical datasets: what clinical and genomic data requires"
+- "Five architecture decisions I made building a Duchenne biomedical data platform"
+
+---
+
+## Platform and Open Access — Week 20+
+
+**Goal:** make the non-patient-level products available externally; complete platform documentation and ADRs.
+
+**Do:**
+- [ ] Package `clinical.gold.trial_eligibility_catalogue` and `discovery.gold.dmd_mutation_catalogue` for Databricks Marketplace
+- [ ] Publish open-source reading frame calculator and eligibility rule engine to GitHub
+- [ ] Define API access layer for programmatic consumption
+- [ ] Write all five ADRs — include FHIR integration as ADR: future EHR integration via FHIR R4, deferred from critical path
 - [ ] Write `/docs/ecosystem-map.md`
+- [ ] Write `/docs/glossary.md` (if not already complete)
+- [ ] Write `/docs/setup.md` (if not already complete)
+- [ ] Set up Claude Code automation for changelog and data quality updates
 
 **Posts:**
-- "Writing data contracts for biomedical datasets: what clinical and genomic data requires"
 - "The biomedical data landscape for data engineers: a practical map of what exists"
-- "Five architecture decisions I made building a Duchenne biomedical data platform"
+- "FHIR for data engineers: future EHR integration and why it was not on the critical path"
+- Platform launch / open access announcement
 
 ---
 
 ## Complete Post Sequence
 
-| # | Title | When |
+| # | Title | Product |
 |---|---|---|
-| 1 | Project announcement and launch | Week 8 |
-| 2 | ClinicalTrials.gov findings | Week 8 |
-| P1 | Product 1 launch | Week 8 |
-| 3 | OMOP mapping on Databricks | Week 9 |
-| 4 | GCP and compliance for data engineers | Week 9 |
-| 5 | Compliant GenAI for clinical text | Week 10 |
-| 6 | Five architecture decisions | Week 10 |
-| 7 | Reference genome problem | Module 2 |
-| 8 | Production VCF ingestion on Databricks | Module 2 |
-| 9 | Variant naming as data quality | Module 2 |
-| 10 | Annotating DMD variants with VEP | Module 2 |
-| 11 | gnomAD as data engineering | Module 2 |
-| 12 | ClinVar classification conflicts | Module 2 |
-| 13 | Coordinate system trap | Module 2 |
-| 14 | Reading frame rule as data model | Module 3 |
-| 15 | Linking variants to trial eligibility | Module 3 |
-| 16 | Extending OMOP for rare disease genomics | Module 3 |
-| P2 | Product 2 launch | Module 3 |
-| 17 | Data contracts for biomedical datasets | Module 4 |
-| 18 | Biomedical data landscape map | Module 4 |
-| 19 | Unity Catalog for 21 CFR Part 11 | Module 4 |
-| 20 | FHIR for data engineers: future EHR integration | Module 4 |
+| 1 | Project announcement and launch | Product 1 launch |
+| 2 | ClinicalTrials.gov findings | Product 1 |
+| P1 | Product 1 launch — trial eligibility catalogue | Product 1 |
+| 3 | OMOP mapping on Databricks *(cross-post to OHDSI)* | Product 1 |
+| 4 | Compliant GenAI for clinical text | Product 1 |
+| 5 | Using LLMs to extract structured eligibility criteria | Product 1 |
+| 6 | GCP and compliance for data engineers | Product 1 |
+| 7 | Unity Catalog for 21 CFR Part 11 | Product 1 |
+| 8 | Reference genome problem | Product 2 |
+| 9 | Production VCF ingestion on Databricks | Product 2 |
+| 10 | Variant naming as data quality | Product 2 |
+| 11 | Annotating DMD variants with VEP | Product 2 |
+| 12 | gnomAD as data engineering | Product 2 |
+| 13 | ClinVar classification conflicts | Product 2 |
+| 14 | Coordinate system trap | Product 2 |
+| 15 | Reading frame rule as data model *(TREAT-NMD outreach trigger)* | Product 3 |
+| 16 | Extending OMOP for rare disease genomics *(OHDSI forum post)* | Product 3 |
+| 17 | Linking variants to trial eligibility *(centrepiece post)* | Product 4 |
+| P4 | Product 4 launch — patient-trial eligibility | Product 4 |
+| 18 | Data contracts for biomedical datasets | Product 5 |
+| 19 | Five architecture decisions | Product 5 |
+| 20 | Biomedical data landscape map | Platform |
+| 21 | FHIR for data engineers: future EHR integration | Platform |
