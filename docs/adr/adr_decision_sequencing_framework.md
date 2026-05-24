@@ -1,14 +1,21 @@
-### Architecture Decision Sequencing Framework
+# Architecture Decision Sequencing Framework
 Duchenne Rare Disease Data Mesh — Open Source
 
-Purpose
+## Purpose
 This document governs when architectural decisions are made, what information is required to make them well, and what triggers deferred decisions. It sits above individual ADRs and answers a question they do not: in what order should decisions be made, and why.
 Every decision in this framework is classified on three axes before it is made:
 - **Reversibility** : How costly is it to change this decision later? (Structural, Costly, Adjustable, Throwaway)
 - **Dependency direction**: what does this decision block, and what must precede it?  (Blocking, Dependent, Independent)
 - **Information Readiness**: when do you have enough information to decide well? (Decidable now, Decidable at milestone, Decidable on trigger, Undecidable yet)
+- **Status** (Done, Draft, Not started)
 
 Decisions are made following the last responsible moment principle: Defer decisions until the moment when further deferral becomes costly. A decision made early is made with less information. The cost of early decisions is not just the risk of being wrong; it is the foreclosure of options not yet visible.
+
+## ADR Decision Inventory
+
+| Decision | Description | Reversibility | Dependency | Information Readiness | Status |
+|----------|-------------|---------------|------------|-----------------------|--------|
+| [ADR-00](docs/adr/adr_00.md) | The use of AI inside this project | Adjustable | Independent | Decidable now| Done|
 
 
 
@@ -301,13 +308,3 @@ Everything not on this path either runs in parallel or is explicitly deferred wi
 ADR Status Register
 IDDecisionTierReversibilityStatusADRD-00Data mesh paradigm0StructuralPendingADR-000D-01Databricks platform0StructuralPendingADR-001D-02Domain boundary principle1StructuralPendingADR-002D-03Data product definition1StructuralPendingADR-003D-04Match product ownership1StructuralPendingADR-004D-05Canonical trial data source1CostlyPendingADR-005D-06Eligibility representation standard1CostlyPendingADR-006D-07Versioning and lifecycle strategy2StructuralPendingADR-007D-08Medallion layer invariants2AdjustablePendingADR-008D-09GenAI extraction scope2AdjustablePendingADR-009D-10Computability classification schema2PartialPendingADR-010D-11Cross-domain contract enforcement3AdjustablePendingADR-011D-12Match product interface type3AdjustablePendingADR-012D-13HGVS representation4CostlyDeferred — trigger: patient data added—D-14Separate matching domain4StructuralDeferred — trigger: second disease area—D-15Partitioning optimisation4ThrowawayDeferred — trigger: query performance threshold—D-16External sharing model4AdjustableDeferred — trigger: external consumer identified—D-17Full GxP validation framework4CostlyDeferred — trigger: regulated entity adoption—
 
-ADR Template
-Each ADR referenced above follows this structure:
-Context — what forces are in tension; cite published sources where this project uses published evidence rather than org-specific context.
-Decision — what was chosen, stated unambiguously.
-Alternatives considered — what else was evaluated and why it was not chosen.
-Rationale — why this over alternatives, with references to the forces in the context section.
-Consequences — what this enables, what it forecloses, what it requires downstream.
-Compliance implications — which regulation or standard this satisfies or constrains.
-Assumptions — what is assumed but not yet validated; each assumption is a future validation point.
-Review trigger — what change in circumstances would cause this decision to be revisited.
