@@ -107,12 +107,13 @@ genetic-disease-data-mesh-databricks/
 │   │   -- For researchers and domain scientists --
 │   ├── scientific_background.md       # DMD biology, classification system, data model, prior art
 │   ├── data_quality_and_coverage.md   # What data is included, reliability, known gaps
+│   ├── papers  # References for the scientific knowledge encoded in the platform.
 │   │
 │   │   -- For decision makers and stakeholders --
 │   ├── business_case.md               # Use cases, value proposition, disease extension
-│   ├── roadmap.md                     # Data product build order and milestones
 │   │
 │   │   -- For data engineers and developers --
+│   ├── adr                            # Architectural Decision Records contain the reasoning for the different choices made in this project
 │   ├── setup.md                       # Local and Databricks dev environment setup
 │   ├── model-card.md                  # GenAI extraction pipeline documentation
 │   ├── contributing.md                # How to contribute (currently closed)
@@ -132,9 +133,13 @@ See [docs/setup.md](docs/setup.md) for prerequisites, step-by-step environment s
 
 ## Data Access and Licencing
 
-Non-commercial use of published data products is free. Each product has its own licence tier. See [docs/data-products.md](docs/data-products.md) for access methods (Databricks Marketplace, API), usage terms, and how to request commercial access.
+Relevant in case end users require a deployed and managed data product.
+See [docs/data-products.md](docs/data-products.md) for access methods (Databricks Marketplace, API), usage terms, and how to request commercial access.
 
 ---
+
+## Architectural Decision Records
+To understand more the why and how behind certain architectural decisions, see [docs/contributing.md](docs/contributing.md)
 
 ## Collaboration and Contact
 
