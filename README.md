@@ -5,7 +5,7 @@ A governed, continuously updated data platform linking genetic mutation profiles
 
 ## The Problem
 
-The four FDA-approved exon-skipping therapies for DMD cover only 27% of patients by mutation alone ([Leckie et al., 2024](https://pmc.ncbi.nlm.nih.gov/articles/PMC11593839/)). The remaining 73% have options — investigational antisense oligonucleotides, CRISPR-based approaches, gene therapy, base and prime editing — but identifying which approach a specific patient qualifies for requires manually cross-referencing mutation registries, the reading frame rule, and free-text trial eligibility criteria across systems that do not interoperate. That process does not scale across a patient registry and does not update when new trials open.
+The four FDA-approved exon-skipping therapies for DMD cover only 27% of patients by mutation alone ([Leckie et al., 2024](https://pmc.ncbi.nlm.nih.gov/articles/PMC11593839/)). The remaining 73% have options (investigational antisense oligonucleotides, CRISPR-based approaches, gene therapy, base and prime editing) but identifying which approach a specific patient qualifies for requires manually cross-referencing mutation registries, the reading frame rule, and free-text trial eligibility criteria across systems that do not interoperate. That process does not scale across a patient registry and does not update when new trials open.
 
 This platform makes it queryable.
 
