@@ -21,6 +21,23 @@ GA4GH Data Access Framework — the standard for controlled access to genomic da
 
 ---
 
+## References
+
+**Books**
+- Dehghani, *Data Mesh* ch7: federated computational governance — how cross-domain and cross-organisational data sharing is governed without centralised control; the conceptual basis for the external sharing model choice
+- FDE ch9: data product interface patterns — external-facing interface design for data products shared across organisational boundaries
+
+**Databricks documentation**
+- [Delta Sharing](https://docs.databricks.com/en/delta-sharing/index.html) — the open protocol for sharing Delta tables across organisational boundaries without data copying; audit logs, recipient management, and the consumer-side experience without requiring a Databricks subscription
+- [Unity Catalog external sharing](https://docs.databricks.com/en/data-governance/unity-catalog/index.html) — how Unity Catalog manages access grants to external recipients; the governance layer above the Delta Sharing protocol
+- [Databricks Clean Rooms](https://docs.databricks.com/en/clean-rooms/index.html) — the mechanism for sharing derived analytics without exposing raw underlying records; relevant when a registry consumer should receive eligibility verdicts but not the patient-level variant data
+
+**Regulatory and standards references**
+- GDPR Article 46 — adequacy requirements for cross-border personal data transfers; determines whether Standard Contractual Clauses or a Data Transfer Agreement are needed when sharing with non-EEA organisations
+- [GA4GH Framework for Responsible Sharing of Genomic and Health-Related Data](https://www.ga4gh.org/genomic-data-toolkit/data-security-toolkit/framework-for-responsible-sharing-of-genomic-and-health-related-data/) — the standard for controlled access to genomic research data; relevant if a research consortium is the external consumer and requires GA4GH-compliant access control
+
+---
+
 ## Decision (to be filled in when triggered)
 
 *Context, decision, alternatives considered, rationale, consequences, compliance implications, assumptions, and review trigger to be completed when an external consumer is identified.*

@@ -25,6 +25,18 @@ ML model lifecycle requirements — if matching logic becomes a trained model ra
 
 ---
 
+## References
+
+**Books**
+- Dehghani, *Data Mesh* ch4: domain ownership design — how to draw domain boundaries and when proliferating domains adds coordination overhead rather than reducing it
+- Dehghani, *Data Mesh* ch8: federated governance — cross-domain data product governance; relevant if a second disease domain emerges with its own team and lifecycle
+- DMLS ch10: MLOps and model lifecycle management — if matching logic becomes a trained model, this chapter covers the versioning and validation lifecycle that may justify a separate domain
+
+**Databricks documentation**
+- No Databricks-specific documentation is required until the trigger is met — this is an architectural boundary decision, not a technical implementation choice.
+
+---
+
 ## Decision (to be filled in when triggered)
 
 *Context, decision, alternatives considered, rationale, consequences, compliance implications, assumptions, and review trigger to be completed when the trigger condition is met.*

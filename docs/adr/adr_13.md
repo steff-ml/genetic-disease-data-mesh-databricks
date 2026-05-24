@@ -26,6 +26,19 @@ SQL endpoint for prototype demonstration. REST API documented as the target for 
 
 ---
 
+## References
+
+**Books**
+- FDE ch9: data product interface patterns and consumer-facing API design
+- Dehghani, *Data Mesh* ch5: interface as part of the data product contract
+
+**Databricks documentation**
+- [Databricks SQL endpoint](https://docs.databricks.com/en/sql/get-started/index.html) — setup, authentication, query patterns; the primary interface for the prototype match product
+- [Delta Sharing](https://docs.databricks.com/en/delta-sharing/index.html) — the external sharing interface for ADR-17; worth reading now to understand the upgrade path from SQL endpoint to external sharing
+- [Model Serving REST API](https://docs.databricks.com/en/machine-learning/model-serving/index.html) — the target interface for clinical application integration requiring real-time single-patient queries
+
+---
+
 ## Decision (to be filled in)
 
 *Context, alternatives considered, rationale, consequences, compliance implications, assumptions, and review trigger to be completed before the first external consumer accesses a data product.*

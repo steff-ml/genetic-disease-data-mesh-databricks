@@ -30,6 +30,18 @@ Pipelines that are not tested are not maintained — they are replaced. A test s
 
 ---
 
+## References
+
+**Books**
+- DMLS ch3 (Data Engineering Fundamentals) — testing data pipelines: unit testing transformation functions, integration testing with realistic data, and the role of data quality checks in a CI/CD pipeline
+- FDE ch7 (data quality and pipeline testing) — pipeline testing patterns, the distinction between unit and integration tests in a data engineering context, and test data management strategies
+
+**Databricks documentation**
+- [Databricks Connect](https://docs.databricks.com/en/dev-tools/databricks-connect/index.html) — runs Spark code on a Databricks cluster from a local development environment; enables near-local unit test execution for Spark-based transformations without needing a full cluster spin-up in CI
+- [CI/CD for Databricks](https://docs.databricks.com/en/dev-tools/ci-cd.html) — patterns for running tests automatically on pull requests; staging environment configuration; the integration test infrastructure design
+
+---
+
 ## Decision (to be filled in before Bronze build)
 
 *Context, decision, alternatives considered, rationale, consequences, compliance implications, assumptions, and review trigger to be completed before the first pipeline is built.*

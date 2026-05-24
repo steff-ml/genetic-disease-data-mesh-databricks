@@ -30,6 +30,25 @@ Silver invariant: Deferred until first Bronze ingestion — actual data quality 
 
 ---
 
+## References
+
+**Books**
+- FDE ch6–8: pipeline architecture, data quality enforcement, and audit trail patterns
+- DDIA ch3: storage engines and how append-only semantics implement immutability
+- DDIA ch10–11: batch and stream processing patterns relevant to Bronze ingestion guarantees
+
+**Databricks documentation**
+- [Delta Lake overview](https://docs.databricks.com/en/delta/index.html) — ACID guarantees, append-only semantics, and the transaction log that implement Bronze immutability
+- [Delta Lake time travel](https://docs.databricks.com/en/delta/history.html) — how the Bronze immutability story holds even when data corrections are needed: append, never overwrite
+- [Delta Live Tables overview](https://docs.databricks.com/en/dlt/index.html) — the pipeline framework for implementing Silver layer quality constraints and transformations (now called Lakeflow Spark Declarative Pipelines)
+- [DLT expectations](https://docs.databricks.com/en/dlt/expectations.html) — how to write conformance rules as first-class pipeline components; directly implements Silver layer invariants
+
+**Regulatory references**
+- FDA Data Integrity Guidance (2018)
+- ICH E6(R3) sections 4–5
+
+---
+
 ## Decision (to be filled in)
 
 *Context, alternatives considered, rationale, consequences, compliance implications, assumptions, and review trigger to be completed in two stages: Bronze invariants before Bronze build; Silver invariants before Silver build.*

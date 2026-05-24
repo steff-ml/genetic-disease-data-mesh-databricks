@@ -28,6 +28,20 @@ Version stored as Unity Catalog table property. Consumer pipelines declare versi
 
 ---
 
+## References
+
+**Books**
+- Dehghani, *Data Mesh* ch7, ch8: federated governance and cross-domain contract patterns
+- DDIA ch4: schema evolution and the costs of incompatible changes for consumers
+- FDE ch3: data contracts and SLA design in data engineering
+
+**Databricks documentation**
+- [Delta Lake table properties](https://docs.databricks.com/en/delta/table-properties.html) — storing version contract metadata as a table property
+- [Unity Catalog schema evolution](https://docs.databricks.com/en/data-governance/unity-catalog/schema-evolution.html) — how Unity Catalog handles schema changes and what is enforced automatically; critical for understanding what the contract enforcement mechanism provides for free
+- [Delta schema validation](https://docs.databricks.com/en/delta/schema-validation.html) — the difference between `mergeSchema` and strict mode; published cross-domain products should use strict mode
+
+---
+
 ## Decision (to be filled in)
 
 *Context, alternatives considered, rationale, consequences, compliance implications, assumptions, and review trigger to be completed before the first cross-domain product is published.*

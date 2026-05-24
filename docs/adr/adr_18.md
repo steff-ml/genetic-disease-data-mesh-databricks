@@ -27,6 +27,22 @@ Validation evidence requirements for the specific regulated use case: which reco
 
 ---
 
+## References
+
+**Books**
+- No general-purpose data engineering or ML books cover GxP validation directly. This decision is governed entirely by regulatory and industry-standard guidance.
+
+**Regulatory references**
+- ICH E6(R3) — Good Clinical Practice guidance; sections 4–5 cover computerised systems and data integrity obligations in regulated clinical trials; defines the obligations the platform must satisfy to be used in a trial context
+- FDA 21 CFR Part 11 — electronic records and electronic signatures; the technical requirements (audit trail, access control, system validation) for systems used in FDA-regulated contexts
+- GAMP 5 (ISPE) — the industry-standard validation lifecycle framework: User Requirements Specification, Functional Specification, Design Specification, Installation Qualification (IQ), Operational Qualification (OQ), Performance Qualification (PQ)
+
+**Additional regulatory resources**
+- EMA Annex 11 — the EU equivalent of FDA 21 CFR Part 11 for computerised systems in GMP/GCP contexts; required if the regulated consumer operates under EMA oversight
+- EMA Guidelines on Computerised Systems — practical implementation guidance that complements the legal text of Annex 11; covers data integrity, audit trails, and validation in clinical trial data management
+
+---
+
 ## Decision (to be filled in when triggered)
 
 *Context, decision, alternatives considered, rationale, consequences, compliance implications, assumptions, and review trigger to be completed when a regulated entity adopts the platform.*

@@ -28,6 +28,18 @@ Data quality has two separate concerns that are often conflated: enforcement (ba
 
 ---
 
+## References
+
+**Books**
+- DMLS ch8 (Data Distribution Shifts and Monitoring) — detecting data quality degradation over time; the distinction between static quality rules and drift detection; directly applicable to monitoring how extracted eligibility criterion distributions change as ClinicalTrials.gov data evolves
+- FDE ch7 (data quality patterns) — quality dimensions (completeness, validity, consistency, timeliness, uniqueness) and the enforcement-vs-monitoring distinction this ADR builds on
+
+**Databricks documentation**
+- [Lakehouse Monitoring](https://docs.databricks.com/en/lakehouse-monitoring/index.html) — Databricks' native table profiling and drift detection; auto-profiles Delta tables and detects distribution changes without custom code; the primary candidate for Gold layer quality monitoring
+- [Delta Live Tables event log](https://docs.databricks.com/en/dlt/event-log.html) — the built-in quality metrics table produced by DLT pipelines; records pass/fail counts per expectation per pipeline run; queryable as a Delta table for trend dashboards and SLA breach detection
+
+---
+
 ## Decision (to be filled in before Silver layer build)
 
 *Context, decision, alternatives considered, rationale, consequences, compliance implications, assumptions, and review trigger to be completed before the Silver layer is built.*

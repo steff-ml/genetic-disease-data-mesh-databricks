@@ -32,6 +32,29 @@ ADR-10 decides what the extraction model does. This ADR decides how it is govern
 
 ---
 
+## References
+
+**Books — AI Engineering (Huyen, 2025)**
+- AIE ch3–4 (Evaluation Methodology and Metrics) — precision/recall for extracted entities, confidence calibration methods; required to define what the confidence threshold means and how to justify it
+- AIE ch10 (AI Engineering Architecture) — the overall architecture for integrating an LLM into a data pipeline; how to version the extraction component and interface it with downstream consumers
+
+**Books — Designing ML Systems (Huyen, 2022)**
+- DMLS ch8 (Data Distribution Shifts and Monitoring) — detecting when an extraction model degrades due to changes in source data language; maps directly to the post-deployment monitoring requirement and EU AI Act post-market monitoring obligation
+
+**Databricks documentation**
+- [MLflow](https://docs.databricks.com/en/mlflow/index.html) — prompt versioning, model version tracking, extraction accuracy logging; the `extracted_by` field in the Silver schema (ADR-11) should reference an MLflow run ID to make outputs traceable to the exact prompt and model that produced them
+- [External model endpoints](https://docs.databricks.com/en/generative-ai/external-models/index.html) — how to call and audit external API calls (Claude) within a Databricks pipeline; provides the audit log mechanism for external model calls required under the governance framework
+
+**Anthropic resources**
+- [Anthropic model deprecation policy](https://docs.anthropic.com/en/api/versioning) — the published model lifecycle and deprecation schedule; defines the minimum notice period before a pinned model version is retired; required reading before committing a version string to a production pipeline
+- [Anthropic usage policy](https://www.anthropic.com/legal/usage-policy) — confirms whether processing clinical trial eligibility text is within permitted use; must be reviewed before production deployment, and again if the pipeline is extended to non-public patient data
+- [Anthropic privacy policy and data handling](https://www.anthropic.com/legal/privacy) — the data processing terms covering what Anthropic retains from API calls; critical for confirming compliance when any patient-adjacent data enters the extraction pipeline
+
+**Regulatory references**
+- [EU AI Act (Regulation 2024/1689)](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32024R1689) — the full regulation text; Annex III defines high-risk AI system categories (healthcare context); Article 10 covers data governance requirements; Article 13 covers transparency obligations; required reading before production deployment of the extraction pipeline
+
+---
+
 ## Decision (to be filled in before extraction pipeline build)
 
 *Context, decision, alternatives considered, rationale, consequences, compliance implications, assumptions, and review trigger to be completed before the extraction pipeline goes to production.*

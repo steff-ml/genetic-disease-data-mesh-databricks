@@ -32,6 +32,19 @@ Cost implications — DLT adds a DBU multiplier on top of standard compute costs
 
 ---
 
+## References
+
+**Books**
+- FDE ch6–8: pipeline architecture and the trade-offs between declarative and imperative pipeline frameworks; the testing and operational implications of framework choice
+- DDIA ch11: stream processing — the reliability and ordering guarantees required of a pipeline that processes late-arriving trial data; relevant to DLT streaming source configuration and exactly-once semantics
+
+**Databricks documentation**
+- [Delta Live Tables overview](https://docs.databricks.com/en/dlt/index.html) — the declarative pipeline framework; pipeline modes (triggered vs continuous), Unity Catalog integration, and the runtime guarantees (now called Lakeflow Spark Declarative Pipelines)
+- [DLT expectations](https://docs.databricks.com/en/dlt/expectations.html) — `@dlt.expect_or_quarantine` pattern for inline quality enforcement; how failing records are routed and what metrics are captured in the DLT event log; directly relevant to ADR-22
+- [Databricks Workflows](https://docs.databricks.com/en/workflows/index.html) — job orchestration for standard Spark jobs; task dependencies, retry logic, parameter passing; the alternative framework for the extraction step if DLT cannot accommodate external API calls
+
+---
+
 ## Decision (to be filled in before Bronze build)
 
 *Context, decision, alternatives considered, rationale, consequences, compliance implications, assumptions, and review trigger to be completed before the first pipeline is built.*

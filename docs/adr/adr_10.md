@@ -28,6 +28,29 @@ Deterministic genetic criteria use a reference table, not an LLM. LLM scope is l
 
 ---
 
+## References
+
+**Books — AI Engineering (Huyen, 2025)**
+- AIE ch5, Information Extraction section (p.521–536) — **primary reference** for this ADR. The only source in the reading list that directly addresses how to build a structured extraction pipeline using an LLM: structured output enforcement, JSON schema compliance, prompt patterns for extraction tasks
+- AIE ch3–4 (Evaluation Methodology and Metrics) — how to evaluate extraction quality, precision/recall on extracted entities, confidence calibration; needed to write the evaluation criteria for the confidence score design
+- AIE ch6 (RAG and Agents) — if eligibility criteria extraction needs to reference external knowledge (HPO ontology, drug labels), RAG architecture patterns apply
+- AIE ch10 (AI Engineering Architecture) — the overall architecture for integrating an LLM extraction component into a data pipeline; covers the interface between extraction and downstream consumers
+
+**Books — Designing ML Systems (Huyen, 2022)**
+- DMLS ch3 (Data Engineering Fundamentals) — the data pipeline context for ML components; where extraction sits in the Bronze→Silver pipeline
+- DMLS ch8 (Data Distribution Shifts and Monitoring) — how ClinicalTrials.gov eligibility criteria language changes over time and how to detect when the extraction model degrades due to distribution shift; the monitoring dimension of this decision
+
+**Databricks documentation**
+- [Model Serving](https://docs.databricks.com/en/machine-learning/model-serving/index.html) — how to deploy the LLM extraction component as a Databricks endpoint; relevant to latency, cost, and audit trail for the extraction step
+- [MLflow](https://docs.databricks.com/en/mlflow/index.html) — tracking extraction model experiments, versioning prompts and models, logging extraction accuracy metrics; the `extracted_by` field in the Silver schema should reference an MLflow run ID
+- [External model endpoints](https://docs.databricks.com/en/generative-ai/external-models/index.html) — how to integrate and audit external API calls (Claude) within Databricks if not using a self-hosted model
+
+**Domain-specific primary sources**
+- Aartsma-Rus reading frame calculator and exon skipping amenability tables
+- FDA approved drug labels: eteplirsen, golodirsen, viltolarsen, casimersen
+
+---
+
 ## Decision (to be filled in)
 
 *Context, alternatives considered, rationale, consequences, compliance implications, assumptions, and review trigger to be completed before extraction pipeline build.*

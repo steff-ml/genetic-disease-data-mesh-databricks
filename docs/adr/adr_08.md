@@ -26,6 +26,19 @@ Semantic versioning. Breaking change defined as: schema column removal or rename
 
 ---
 
+## References
+
+**Books**
+- DDIA ch4: schema evolution and the costs of breaking changes for downstream consumers
+- Dehghani, *Data Mesh* ch5: versioning as part of the data product contract
+- FDE ch2: data lifecycle and retention patterns
+
+**Databricks documentation**
+- [Delta Lake table history and time travel](https://docs.databricks.com/en/delta/history.html) — the technical foundation for the version audit trail; how versions are recorded and how historical states are queried
+- [Delta Lake table properties](https://docs.databricks.com/en/delta/table-properties.html) — how to store version metadata as a table property as part of the versioning implementation
+
+---
+
 ## Decision (to be filled in)
 
 *Context, alternatives considered, rationale, consequences, compliance implications, assumptions, and review trigger to be completed before the first Gold product is published.*

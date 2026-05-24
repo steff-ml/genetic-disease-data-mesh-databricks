@@ -26,6 +26,20 @@ Three classes: deterministic (matching rule implementable without LLM), probabil
 
 ---
 
+## References
+
+**Books**
+No direct book coverage — this is a domain-specific design decision.
+
+**Databricks documentation**
+- [Delta Lake data types](https://docs.databricks.com/en/sql/language-manual/sql-ref-datatypes.html) — specifically the STRUCT type for representing the classification fields (class, confidence score, extracted_by) in the Silver schema
+
+**Primary sources**
+- HPO (Human Phenotype Ontology) documentation — coverage of neuromuscular phenotypes determines what is classifiable as deterministic
+- 20–30 DMD trial eligibility texts from ClinicalTrials.gov — the empirical basis; the schema must reflect criterion types that actually appear in real trials
+
+---
+
 ## Decision (to be filled in)
 
 *Context, alternatives considered, rationale, consequences, compliance implications, assumptions, and review trigger to be completed before Silver layer build.*

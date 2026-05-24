@@ -25,6 +25,18 @@ Data volume actuals — partitioning strategy depends on row counts. A trial cat
 
 ---
 
+## References
+
+**Books**
+- FDE ch6–8: pipeline architecture and physical design — data layout decisions that affect query performance; partitioning is a physical design choice that must follow, not precede, real query pattern observation
+- DDIA ch3: storage engines and data structures — the conceptual foundation for why data locality on disk affects scan performance; explains why Z-ordering and clustering work
+
+**Databricks documentation**
+- [Delta Lake OPTIMIZE and ZORDER](https://docs.databricks.com/en/delta/optimize.html) — the OPTIMIZE command and ZORDER BY clause; how to trigger compaction and multi-dimensional clustering; file size targets and when to run
+- [Liquid Clustering](https://docs.databricks.com/en/delta/liquid-clustering.html) — the current recommended alternative to static partitioning for most Delta tables; adaptive clustering that does not require upfront partition column selection and can be changed without rewriting the table
+
+---
+
 ## Decision (to be filled in when triggered)
 
 *Context, decision, alternatives considered, rationale, consequences, compliance implications, assumptions, and review trigger to be completed when query performance threshold is crossed.*

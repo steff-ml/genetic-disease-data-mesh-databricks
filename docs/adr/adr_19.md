@@ -42,6 +42,23 @@ The specific query patterns this project must support, which should drive Gold l
 
 ---
 
+## References
+
+**Books**
+- DDIA ch2: data models and query languages — relational, document, and graph models; the conceptual basis for choosing between normalised, dimensional, and wide-table approaches; explains the trade-offs that motivate OBT at Gold
+- FDE ch6–8: pipeline architecture and data modelling in the context of medallion layers; physical design considerations for analytical workloads on a Lakehouse
+- Kimball & Ross, *The Data Warehouse Toolkit* (3rd ed.) — the primary reference for dimensional modelling: fact grain, slowly changing dimensions, star schema design; the standard interface biostatisticians expect at Gold layer
+- Linstedt & Olschimke, *Building a Scalable Data Warehouse with Data Vault 2.0* — the full hub/link/satellite methodology; relevant for Silver layer design if auditability and late-arriving data handling are the primary constraints
+
+**Databricks documentation**
+- [Delta Lake best practices](https://docs.databricks.com/en/delta/best-practices.html) — file size management, compaction, and the One Big Table pattern specifically recommended by Databricks for Gold-layer analytical tables
+- [Photon engine](https://docs.databricks.com/en/optimizations/photon.html) — the vectorised query engine; understanding its performance characteristics informs whether wide OBT tables or normalised star schemas are more cost-effective at query time
+
+**Standards references**
+- [OMOP CDM 5.3.1 documentation](https://ohdsi.github.io/CommonDataModel/cdm53.html) — the OHDSI Common Data Model; defines the concept, measurement, observation, and drug exposure structures that the Gold Clinical domain should align with or be derivable from; read before designing Gold table column names and value sets
+
+---
+
 ## Decision (to be filled in before Silver layer build)
 
 *Context, decision, alternatives considered, rationale, consequences, compliance implications, assumptions, and review trigger to be completed before the Silver schema is designed.*
