@@ -15,28 +15,15 @@ Decisions are made following the last responsible moment principle: Defer decisi
 
 ## ADR Decision Inventory
 
-| Decision | Description | Reversibility | Dependency | Information Readiness | Status |
-|----------|-------------|---------------|------------|-----------------------|--------|
-| [ADR-00](adr_00.md) | The use of AI inside this project | Adjustable | Independent | Decidable now| Done|
+| Decision | Description | Reversibility | Dependency | Information Readiness | Decision trigger | Revisit trigger |Status |
+|----------|-------------|---------------|------------|-----------------------|------------------|-----------------|-------|
+| [ADR-00](adr_00.md) | The use of AI inside this project | Adjustable | Independent | Decidable now| Before any building| When changes in AI services are observed (quality competitor, throttling, ...) or in the regulatory framework| Done|
+| [ADR-01](adr_01.md) | Adopt data mesh as architectural paradigm | Structural | Blocks all other decisions | Decidable with published evidence| Before any building| Fundamental change in organisational structure that makes domain ownership unworkable, or emergence of a paradigm that resolves the same forces more effectively.| Draft|
 
 
 
 The Decision Inventory
 
-Tier 0 — Paradigm and Platform
-Structural decisions made once. They constrain everything that follows.
-
-D-00: Adopt data mesh as the architectural paradigm
-Reversibility: Structural. The entire downstream architecture assumes domain ownership, data products, and federated governance.
-Blocks: All other decisions.
-Depends on: Nothing architectural.
-Information readiness: Decidable with published evidence.
-Knowledge required:
-
-Dehghani, Data Mesh (O'Reilly, 2022) — chapters 1–3: the four principles and the problems they solve
-FDA Data Integrity Guidance (2018) — the failure modes in regulated contexts a mesh must resolve
-Wilkinson et al., FAIR Data Principles (2016) — the scientific data sharing failures that motivate mesh in research
-Understanding of alternative paradigms: centralised lakehouse, federated databases, per-study databases
 
 Trigger for revisiting: Fundamental change in organisational structure that makes domain ownership unworkable, or emergence of a paradigm that resolves the same forces more effectively.
 Write ADR before: Any build activity.
