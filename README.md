@@ -139,7 +139,7 @@ See [docs/data-products.md](docs/data-products.md) for access methods (Databrick
 ---
 
 ## Architectural Decision Records
-To understand more the why and how behind certain architectural decisions, see [docs/adr_decision_sequencing_framework.md](docs/adr_decision_sequencing_framework.md)
+To understand more the why and how behind certain architectural decisions, see [docs/adr/adr_decision_sequencing_framework.md](docs/adr/adr_decision_sequencing_framework.md)
 
 ## Collaboration and Contact
 
