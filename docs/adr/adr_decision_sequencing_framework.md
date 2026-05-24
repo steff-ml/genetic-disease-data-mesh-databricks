@@ -17,7 +17,7 @@ Decisions are made following the last responsible moment principle: Defer decisi
 
 | Decision | Description | Reversibility | Dependency | Information Readiness | Status |
 |----------|-------------|---------------|------------|-----------------------|--------|
-| [ADR-00](docs/adr/adr_00.md) | The use of AI inside this project | Adjustable | Independent | Decidable now| Done|
+| [ADR-00](adr_00.md) | The use of AI inside this project | Adjustable | Independent | Decidable now| Done|
 
 
 

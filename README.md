@@ -88,8 +88,6 @@ The Discovery domain publishes `patient_mutation_profile` as a cross-domain data
 
 **Early stage — Product 1 in build.** The trial eligibility catalogue (`clinical.gold.trial_eligibility_catalogue`) is the first data product in development. Patient-level matching products require the genomics layer and follow in later build phases.
 
-See [docs/roadmap.md](docs/roadmap.md) for the full build sequence, data product dependencies, and definition of done for each product.
-
 ---
 
 ## Navigating the Repo
