@@ -184,7 +184,7 @@
     - AON's have better results, but still lack efficacy it seems.
 
 
-## Classification system for therapeutic suitability TO BE REVIEWED AS I GO ALONG AI SUGGESTION
+## Classification system for therapeutic suitability TO BE REVIEWED 
 
 Patient-therapy matching in DMD is a three-layer problem. The layers must be kept separate because they compose differently for each patient — a patient can be mutation-eligible for a therapy but excluded on clinical grounds, or vice versa.
 
@@ -428,7 +428,7 @@ The contribution is infrastructure, not a new biological finding. In bioinformat
 ## Scientific limitations and design choices
 
 
-## Roadmap AI GENERATED WILL BE REVIEWED AND UPDATED
+## Roadmap TO BE REVIEWED
 
 The roadmap prioritises the **Clinical domain first** — ingesting and structuring trial eligibility data before building the mutation matching layer. This delivers immediate analytical value (which trials exist for DMD?) and provides an early, concrete encounter with the clinical data standards (CDISC, OMOP, ICD, HPO) that will govern the rest of the data model.
 

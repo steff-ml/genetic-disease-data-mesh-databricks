@@ -1,5 +1,4 @@
-# Genetic Disease Data Mesh for Databricks AI GENERATED BASED ON BUSINESS CASE AND SCIENTIFIC BACKGROUND CONSIDER AS ROUGH PLAN
-
+# Genetic Disease Data Mesh for Databricks DRAFT
 A governed, continuously updated data platform linking genetic mutation profiles to therapeutic eligibility for Duchenne Muscular Dystrophy — built on the Databricks medallion architecture, designed to extend to other rare genetic diseases.
 
 ---
@@ -12,7 +11,7 @@ This platform makes it queryable.
 
 ---
 
-## Data Products
+## Data Products (Planned)
 
 Each gold-layer table is a versioned, governed data product with a published schema, data contract, and quality SLA. Products are built in dependency order.
 
@@ -31,7 +30,7 @@ See [docs/data-products.md](docs/data-products.md) for schemas, access methods, 
 
 ---
 
-## Architecture
+## Architecture (Planned)
 
 The platform follows the Databricks medallion architecture across two data mesh domains.
 
@@ -54,7 +53,7 @@ The Discovery domain publishes `patient_mutation_profile` as a cross-domain data
 
 ---
 
-## Data Domains
+## Data Domains (Planned)
 
 **Discovery domain** — genetic and variant data
 - Variant registries: [LOVD DMD](https://databases.lovd.nl/shared/genes/DMD), [ClinVar](https://www.ncbi.nlm.nih.gov/clinvar/)
@@ -80,7 +79,7 @@ The Discovery domain publishes `patient_mutation_profile` as a cross-domain data
 | Disease reference | OMIM, Orphanet |
 | Gene reference | HGNC |
 | Governance | Unity Catalog, Bitol data contracts, 21 CFR Part 11 audit trail |
-| GenAI | Claude (Anthropic) — structured eligibility extraction with confidence scoring |
+| GenAI | structured eligibility extraction with confidence scoring |
 | Data distribution | Databricks Marketplace, API |
 
 ---
@@ -111,7 +110,6 @@ genetic-disease-data-mesh-databricks/
 │   │
 │   │   -- For decision makers and stakeholders --
 │   ├── business_case.md               # Use cases, value proposition, disease extension
-│   ├── positioning_document.md        # Strategic positioning (Synapse Data)
 │   ├── roadmap.md                     # Data product build order and milestones
 │   │
 │   │   -- For data engineers and developers --
@@ -144,4 +142,6 @@ This project is currently early stage and not open for external contribution. Se
 
 ---
 
-*Built by [Synapse Data](docs/positioning_document.md) — biomedical data engineering at scientific depth.*
+*Built by [Synapse Data] — biomedical data engineering at scientific depth.*
+Synapse Data's mission is building biomedical data infrastructure where expert reasoning is present at every design choice. This project illustrates why this matters: Without a deep understanding of how Duchenne works and what therapies work for whom, it is very difficult to effectively link the right patient to the right trial or therapy, leading to communication overhead and manual processes where every month matters for disease prognosis. I hope this project will stimulate open innovation in the area of biomedical data infrastructure design, help patients get the care they need and allow drug developers to focus on promising therapeutic opportunities.
+
