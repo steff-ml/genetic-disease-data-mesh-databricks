@@ -230,3 +230,57 @@ complexity for a dataset this size.
    of records (~60-70% estimated), making cross-source conflict detection only partial. Additionally,
    `effect_reported` vs `effect_concluded` disagreement within LOVD itself is a secondary conflict
    signal that Silver should also surface.
+
+---
+
+## ClinVar
+
+**Notebook**: `clinvar_first_look.py` | **Target**: `discovery.bronze.clinvar_submissions_raw` | **Date**: 2026-06-06
+
+### Endpoints
+
+NCBI E-utilities with `usehistory=y` strategy — ESearch populates the NCBI History server with all DMD
+variant UIDs in a single call; ESummary retrieves structured JSON in batches against that stored result set.
+
+```
+GET https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi
+    ?db=clinvar&term=DMD[gene]+AND+Homo+sapiens[orgn]&retmax=0&usehistory=y
+→ Returns WebEnv + query_key for paginated retrieval
+
+GET https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi
+    ?db=clinvar&query_key={key}&WebEnv={env}&retstart={offset}&retmax=500&retmode=json
+→ Structured summary record per variation ID
+```
+
+Public, no authentication. Rate limit: 3 req/s unauthenticated, 10 req/s with free NCBI API key
+(`NCBI_API_KEY` env var). The ClinVar submission API (`submit.ncbi.nlm.nih.gov`) was ruled out — POST-only
+for creating submissions, no query interface.
+
+**Production ingestion alternative**: the ClinVar FTP weekly snapshot (`variant_summary.txt.gz`) is strongly
+preferred over paginated API calls — single download, no rate limit, same field coverage, clean weekly
+release cadence. The notebook documents both approaches; the FTP path should be used in the DLT pipeline.
+
+### Record counts
+
+~2,000–4,000 DMD variation IDs expected. At `retmax=500`, full ingestion requires 4–8 ESummary calls —
+well within rate limits at 1 req/s.
+
+### Data quality concerns
+
+1. **Exon coordinates are absent from ESummary.** ClinVar does not return a structured `exon_number` field.
+   Reading frame computation from ClinVar data alone is not possible. Silver must parse the HGVS cDNA notation
+   (e.g. `NM_004006.2:c.649_3259del`) via Ensembl VEP or coordinate lookup against the NM_004006.2 exon table
+   to recover affected exon indices — same enrichment step required as for LOVD `position_mRNA`. This is the
+   single most significant gap for using ClinVar as a mutation-intrinsic source.
+
+2. **`Conflicting interpretations of pathogenicity` is a valid classification value.** ClinVar submitters
+   sometimes disagree, and ClinVar surfaces this explicitly as a classification rather than resolving it.
+   Records in this state cannot serve as a clean reference for the ADR-06 LOVD cross-source conflict rule —
+   they must be flagged with a separate `classification_conflict_internal` marker before any LOVD comparison.
+   Silver must treat these as requiring expert review (`action_required = 'expert_review'`) regardless of the
+   LOVD call.
+
+3. **`last_evaluated` is frequently null for older submissions.** Without an evaluation date, the currency of
+   the pathogenicity classification cannot be assessed. Silver should treat null `last_evaluated` as
+   low-confidence and down-weight such records in the ADR-06 conflict resolution logic. This is particularly
+   relevant for historical DMD submissions predating the 2015 ACMG classification standards.
