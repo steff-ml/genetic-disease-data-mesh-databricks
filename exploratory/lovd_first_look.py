@@ -668,6 +668,31 @@ for field in ("source_system", "ingestion_timestamp", "api_version", "source_url
 # COMMAND ----------
 
 from databricks.connect import DatabricksSession  # noqa: E402
+from pyspark.sql.types import StringType, StructField, StructType  # noqa: E402
+
+# Explicit schema required — all-null columns cannot be inferred by Spark.
+BRONZE_SCHEMA = StructType([
+    StructField("lovd_variant_id",       StringType(), True),
+    StructField("lovd_internal_id",      StringType(), True),
+    StructField("dna_change_cdna",       StringType(), True),
+    StructField("rna_change",            StringType(), True),
+    StructField("protein_change",        StringType(), True),
+    StructField("exon_raw",              StringType(), True),
+    StructField("effect_reported",       StringType(), True),
+    StructField("effect_concluded",      StringType(), True),
+    StructField("clinvar_id",            StringType(), True),
+    StructField("variant_genomic_hg19",  StringType(), True),
+    StructField("variant_genomic_hg38",  StringType(), True),
+    StructField("dbsnp_id",              StringType(), True),
+    StructField("owned_by",              StringType(), True),
+    StructField("created_by",            StringType(), True),
+    StructField("created_date",          StringType(), True),
+    StructField("edited_date",           StringType(), True),
+    StructField("source_system",         StringType(), False),
+    StructField("ingestion_timestamp",   StringType(), False),
+    StructField("api_version",           StringType(), False),
+    StructField("source_url",            StringType(), False),
+])
 
 # Connects to the remote cluster via Databricks Connect — execution happens on Databricks.
 spark = DatabricksSession.builder.profile("steff_horemans").serverless(True).getOrCreate()
@@ -677,7 +702,7 @@ spark = DatabricksSession.builder.profile("steff_horemans").serverless(True).get
 spark.sql("CREATE SCHEMA IF NOT EXISTS workspace.steff_horemans")
 spark.sql("USE workspace.steff_horemans")
 
-df = spark.createDataFrame(bronze_rows)
+df = spark.createDataFrame(bronze_rows, schema=BRONZE_SCHEMA)
 
 (
     df.write
