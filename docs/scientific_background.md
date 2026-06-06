@@ -1,4 +1,4 @@
-Back to [README.md](../../README.md)
+Back to [README.md](../README.md)
 # Scientific background
 
 ## Duchenne disease: a rare genetic disease with complex genetic architecture

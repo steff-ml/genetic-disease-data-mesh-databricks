@@ -1,4 +1,4 @@
-Back to [README.md](../../README.md)
+Back to [README.md](../README.md)
 # Data Products
 
 Each section below describes one data product available on this platform. A data product is a curated, validated dataset with a clear purpose, known quality level, and defined access rules.

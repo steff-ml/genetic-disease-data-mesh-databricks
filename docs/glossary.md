@@ -1,4 +1,4 @@
-Back to [README.md](../../README.md)
+Back to [README.md](../README.md)
 # Glossary
 
 Definitions of key terms used across this platform, grouped by domain. Each entry includes the term, its definition, and where applicable a source for further reading.

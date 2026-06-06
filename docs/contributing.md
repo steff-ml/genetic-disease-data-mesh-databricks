@@ -1,4 +1,4 @@
-Back to [README.md](../../README.md)
+Back to [README.md](../README.md)
 # Contributing
 
 > **Note:** This project is currently early stage and not open for contribution.
