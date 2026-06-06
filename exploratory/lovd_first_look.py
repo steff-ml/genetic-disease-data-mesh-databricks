@@ -75,7 +75,6 @@
 
 # COMMAND ----------
 
-import json
 import time
 import requests
 
@@ -205,11 +204,14 @@ print(f"\nSample entries fetched: {len(entries)}")
 # COMMAND ----------
 
 import xml.etree.ElementTree as ET
-import json
 
 # Parse first entry to enumerate all fields
 def parse_lovd_atom(xml_text):
-    """Parse LOVD Atom XML response, extract entries as dicts."""
+    """Parse LOVD Atom XML response, extract entries as dicts.
+
+    Content type is plain text with newline-separated key:value pairs.
+    Split on the first colon only — values may contain additional colons (e.g. HGVS cDNA notation).
+    """
     root = ET.fromstring(xml_text)
     ns = {
         "atom": "http://www.w3.org/2005/Atom",
@@ -224,19 +226,28 @@ def parse_lovd_atom(xml_text):
 
     entries = []
     for entry in root.findall("atom:entry", ns):
+        record = {}
+
+        # Parse the plain-text key:value content block.
         content_el = entry.find("atom:content", ns)
         if content_el is not None and content_el.text:
-            try:
-                record = json.loads(content_el.text)
-            except json.JSONDecodeError:
-                record = {"raw_content": content_el.text}
-        else:
-            # Fall back to entry-level fields
-            record = {
-                "id": entry.findtext("atom:id", "", ns),
-                "title": entry.findtext("atom:title", "", ns),
-                "updated": entry.findtext("atom:updated", "", ns),
-            }
+            for line in content_el.text.splitlines():
+                line = line.strip()
+                if ":" in line:
+                    key, _, value = line.partition(":")
+                    record[key.strip()] = value.strip() or None
+
+        # Merge entry-level Atom metadata not present in the content block.
+        record.setdefault("id",           entry.findtext("atom:id", None, ns))
+        record.setdefault("title",        entry.findtext("atom:title", None, ns))
+        record.setdefault("published",    entry.findtext("atom:published", None, ns))
+        record.setdefault("updated",      entry.findtext("atom:updated", None, ns))
+        record.setdefault("author_name",  entry.findtext("atom:author/atom:name", None, ns))
+        # Self-link provides the canonical source URL for this specific record.
+        for link in entry.findall("atom:link", ns):
+            if link.get("rel") == "self":
+                record.setdefault("self_url", link.get("href"))
+
         entries.append(record)
 
     return meta, entries
@@ -249,6 +260,16 @@ atom_resp = requests.get(
     timeout=60,
 )
 print(f"Status: {atom_resp.status_code}")
+
+# Debug — print raw XML of the first <entry> to verify parser key assumptions
+import xml.etree.ElementTree as ET  # noqa: E402
+_debug_root = ET.fromstring(atom_resp.text)
+_debug_ns = {"atom": "http://www.w3.org/2005/Atom"}
+_first_entry = _debug_root.find("atom:entry", _debug_ns)
+if _first_entry is not None:
+    print("=== Raw XML of first <entry> ===")
+    print(ET.tostring(_first_entry, encoding="unicode")[:3000])
+print()
 
 meta, entries = parse_lovd_atom(atom_resp.text)
 
@@ -571,10 +592,10 @@ def lovd_entry_to_bronze_row(entry, source_url):
         "variant_genomic_hg19": entry.get("variant_genomic") or entry.get("VariantOnGenome/DNA"),
         "variant_genomic_hg38": entry.get("VariantOnGenome/DNA/hg38"),
         "dbsnp_id": entry.get("dbsnp_id"),
-        "owned_by": entry.get("owned_by"),
-        "created_by": entry.get("created_by"),
-        "created_date": entry.get("created_date"),
-        "edited_date": entry.get("edited_date"),
+        "owned_by": entry.get("author_name"),
+        "created_by": entry.get("author_name"),
+        "created_date": entry.get("published"),
+        "edited_date": entry.get("updated"),
         "source_system": "lovd_shared",
         "ingestion_timestamp": datetime.now(timezone.utc).isoformat(),
         "api_version": "lovd3_rest_v1",
@@ -623,7 +644,7 @@ if bronze_rows:
 
 # COMMAND ----------
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone  # noqa: F811
 
 def add_provenance_metadata(row, api_version="lovd3_rest_v1"):
     """Attach ALCOA+ provenance fields to a Bronze row."""

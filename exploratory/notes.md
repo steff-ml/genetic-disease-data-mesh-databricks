@@ -204,11 +204,15 @@ complexity for a dataset this size.
 
 ### Data quality concerns
 
-1. **`exon_raw` field uses LOVD-specific notation, not canonical HGVS.** The `exon` field contains
-   strings like `"44i_52i"` or `"0i_1i"` — the `i` suffix denotes intronic boundary, and `_` separates
-   start from end exon. This notation must be regex-parsed at Silver to extract integer exon numbers for
-   the reading frame computation. Malformed or null `exon_raw` values block the entire `reading_frame_effect`
-   derivation — highest-risk field in the pipeline. Requires `@dlt.expect_or_quarantine("exon_parseable")`.
+1. **`exon_raw` is not returned by the shared `/variants/DMD` Atom endpoint.** The field is absent from
+   all records — the shared endpoint only returns `position_mRNA` (e.g. `NM_004006.2:c.-1289195_9085-18771`),
+   which contains cDNA coordinates but no discrete exon number. Exon numbers must be derived at Silver via
+   Ensembl coordinate lookup: map the cDNA position range against the NM_004006.2 exon coordinate table to
+   recover affected exon indices, then apply the reading frame rule. Records where `position_mRNA` is null
+   or unparseable cannot contribute to reading frame computation and must be quarantined with
+   `action_required = 'manual_review'`. Note: individual LOVD installations (non-shared) do expose `exon_raw`
+   — if the shared endpoint proves insufficient, a direct query to the Leiden DMD database instance is the
+   fallback.
 
 2. **`Variant/DNA` notation is heterogeneous — three distinct styles present.** Canonical HGVS cDNA
    (`c.6439del`), legacy uncertain-boundary notation (`c.(?_432-1)_(6438+1_?)del`), and fully uncertain
