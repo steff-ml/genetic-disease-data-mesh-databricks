@@ -1,0 +1,7 @@
+ruff
+mypy
+pytest
+bandit
+interrogate
+great-expectations
+databricks-connect  # requires Python 3.12; see docs/setup.md

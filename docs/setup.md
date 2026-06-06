@@ -7,6 +7,7 @@ Back to [README.md](../README.md)
 - [Prerequisites](#prerequisites)
 - [Databricks](#databricks)
   - [VS Code extension](#vs-code-extension)
+  - [Python virtual environment](#python-virtual-environment)
   - [Databricks Connect](#databricks-connect)
   - [Asset Bundles (DABs)](#asset-bundles-dabs)
 - [Local Coding Agents](#local-coding-agents)
@@ -81,6 +82,66 @@ The Databricks panel in VS Code should show your workspace URL and Unity Catalog
 
 ---
 
+### Python virtual environment
+
+A virtual environment isolates the project's Python dependencies from your system Python and is required before installing Databricks Connect or any other project packages.
+
+> **Python version**: `databricks-connect` 16.2 and above require **Python 3.12**. Use `py -3.12 -m venv .venv` — not `python -m venv .venv` — to ensure the venv targets the right interpreter. Install Python 3.12 from [python.org](https://www.python.org/downloads/) if it is not already available.
+
+#### Step by Step Setup
+
+**1. Create the virtual environment**
+
+From the project root in PowerShell:
+
+```powershell
+py -3.12 -m venv .venv
+```
+
+**2. Activate it**
+
+```powershell
+.venv\Scripts\Activate.ps1
+```
+
+If activation is blocked by execution policy, run this once:
+
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+
+Your prompt should show `(.venv)` when the environment is active. Always activate the venv before running `pip install` or any project Python command.
+
+**3. Install project dependencies**
+
+```powershell
+pip install -r requirements.txt
+```
+
+The project `requirements.txt` includes: `ruff`, `mypy`, `pytest`, `bandit`, `interrogate`, `great-expectations`, `databricks-connect`.
+
+**4. Select the interpreter in VS Code**
+
+VS Code should detect `.venv` automatically and prompt you to use it. If not, open the command palette (`Ctrl+Shift+P`) and run **Python: Select Interpreter**, then choose `.venv`.
+
+#### How to Verify Setup
+
+```powershell
+python --version       # should show Python 3.12.x
+pip list               # should show the packages from requirements.txt
+```
+
+#### Common Setup Errors
+
+| Symptom | Fix |
+|---------|-----|
+| `Activate.ps1 cannot be loaded, running scripts is disabled` | Run `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser` then retry |
+| `python: command not found` | Install Python from [python.org](https://www.python.org) and ensure it is on your PATH |
+| VS Code uses system Python after activation | Open Command Palette → **Python: Select Interpreter** and manually select `.\.venv\Scripts\python.exe` |
+| `pip install` installs to system Python | Confirm `(.venv)` is shown in your prompt before running `pip` |
+
+---
+
 ### Databricks Connect
 
 Databricks Connect allows you to run PySpark code locally in VS Code against a remote Databricks cluster. This is used for iterating on pipeline logic without uploading notebooks.
@@ -146,10 +207,23 @@ Databricks Asset Bundles are the declarative way to define, version-control, and
 
 **1. Install the Databricks CLI**
 
+> These commands require **PowerShell** — they will not work in Git Bash or CMD. In VS Code, open a new terminal and select PowerShell from the terminal dropdown if needed.
+
+Download and install the latest release directly from GitHub:
+
 ```powershell
-winget install Databricks.DatabricksCLI
-# Reopen PowerShell after installation
-databricks --version  # confirm it installed
+$release = Invoke-RestMethod "https://api.github.com/repos/databricks/cli/releases/latest"
+$version = $release.tag_name.TrimStart('v')  # tag is "v1.x.y"; filename uses "1.x.y"
+$url = "https://github.com/databricks/cli/releases/download/$($release.tag_name)/databricks_cli_${version}_windows_amd64.zip"
+Invoke-WebRequest -Uri $url -OutFile "$env:TEMP\databricks-cli.zip"
+Expand-Archive -Path "$env:TEMP\databricks-cli.zip" -DestinationPath "$env:USERPROFILE\.databricks-cli" -Force
+[System.Environment]::SetEnvironmentVariable("PATH", $env:PATH + ";$env:USERPROFILE\.databricks-cli", "User")
+```
+
+Reopen PowerShell after running this, then confirm:
+
+```powershell
+databricks --version
 ```
 
 **2. Authenticate**
@@ -162,6 +236,7 @@ databricks auth login --host https://<your-workspace-id>.azuredatabricks.net
 ```
 
 **3. Initialise the bundle in the existing project**
+Make sure that databricks connect is available in your environment. Add it to requirements.txt and pip install.
 
 From the project root:
 
@@ -233,7 +308,7 @@ After a successful deploy, the pipeline should appear in the Databricks UI under
 
 | Symptom | Fix |
 |---------|-----|
-| `databricks: command not found` | Reopen PowerShell after `winget install`; confirm with `databricks --version` |
+| `databricks: command not found` | Reopen PowerShell after updating PATH; confirm with `databricks --version` |
 | `Error: cannot resolve host` | Run `databricks auth login` to refresh the OAuth token |
 | `RESOURCE_CONFLICT: Pipeline already exists` | The pipeline was created manually in the UI — import it into the bundle or delete the manual copy |
 | `INVALID_PARAMETER_VALUE: target schema not found` | The Unity Catalog schema (e.g. `discovery.bronze`) must exist before deploying; create it in the Databricks UI or via SQL first |
