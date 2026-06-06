@@ -1,3 +1,4 @@
+Back to [README.md](../../README.md)
 # Model Card
 
 A model card documents the purpose, behaviour, limitations, and responsible use of an AI model. This card follows the structure proposed by Mitchell et al. (2019) and is adapted for the EU AI Act context.

@@ -1,3 +1,4 @@
+Back to [README.md](../../README.md)
 # Business Case: Genetic Disease Data Mesh 
 This document makes the case for building a governed, continuously updated data platform that links genetic mutation profiles to therapeutic eligibility for Duchenne Muscular Dystrophy (DMD) and demonstrates the value of extending this architecture to other rare genetic diseases.
 

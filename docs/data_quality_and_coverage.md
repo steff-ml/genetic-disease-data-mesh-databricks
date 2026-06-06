@@ -1,3 +1,4 @@
+Back to [README.md](../../README.md)
 # Data Quality & Coverage
 
 This document gives an honest picture of what data this platform contains, how reliable it is, and where its limits are. It is written for a general audience — no technical background is required to read it.

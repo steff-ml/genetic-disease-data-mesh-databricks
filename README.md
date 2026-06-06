@@ -1,4 +1,4 @@
-# Genetic Disease Data Mesh for Databricks DRAFT
+# Genetic Disease Data Mesh for Databricks DRAFT SUBJECT TO CHANGE
 A governed, continuously updated data platform linking genetic mutation profiles to therapeutic eligibility for Duchenne Muscular Dystrophy built on the Databricks medallion architecture, designed to extend to other rare genetic diseases.
 
 ---
@@ -7,7 +7,10 @@ A governed, continuously updated data platform linking genetic mutation profiles
 
 The four FDA-approved exon-skipping therapies for DMD cover only 27% of patients by mutation alone ([Leckie et al., 2024](https://pmc.ncbi.nlm.nih.gov/articles/PMC11593839/)). The remaining 73% have options (investigational antisense oligonucleotides, CRISPR-based approaches, gene therapy, base and prime editing) but identifying which approach a specific patient qualifies for requires manually cross-referencing mutation registries, the reading frame rule, and free-text trial eligibility criteria across systems that do not interoperate. That process does not scale across a patient registry and does not update when new trials open.
 
-This platform makes it queryable.
+This platform makes it queryable. 
+The business value of that is described in [docs/business_case.md](docs/business_case.md).
+The scientific logic behind the linking rules can be found here [docs/scientific_background.md](docs/scientific_background.md).
+
 
 ---
 
@@ -92,7 +95,7 @@ The Discovery domain publishes `patient_mutation_profile` as a cross-domain data
 ---
 
 ## Navigating the Repo
-
+```
 genetic-disease-data-mesh-databricks/
 │
 ├── README.md                          # This file — start here
@@ -120,7 +123,7 @@ genetic-disease-data-mesh-databricks/
 │
 └── (source code folders to be added)
 
-
+```
 
 ---
 
