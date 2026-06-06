@@ -156,20 +156,33 @@ Install the version matching your cluster's Databricks Runtime (DBR). Check your
 pip install databricks-connect==15.4.*   # replace 15.4 with your DBR version
 ```
 
-**2. Configure via the VS Code extension**
+**2. Authenticate via the Databricks CLI**
 
-In the Databricks panel, select your cluster under **Cluster**. The extension writes the connection config automatically — no manual `databricks.yml` editing needed.
-
-Alternatively, configure via the CLI (if you prefer):
+The VS Code extension and Databricks Connect use **separate credential stores**. Even if the extension shows as connected, you must authenticate via the CLI for `DatabricksSession` to work from local Python scripts:
 
 ```powershell
 databricks auth login --host https://<your-workspace-id>.azuredatabricks.net
 # Browser opens — log in and authorise
+# When prompted for a profile name, press Enter to accept DEFAULT
+# or type a custom name (e.g. steff_horemans)
 ```
 
-This stores an OAuth token at `~/.databricks/token-cache.json`. Databricks Connect picks it up automatically.
+This stores an OAuth token in `~/.databrickscfg`. If you used the **DEFAULT** profile name, `DatabricksSession.builder.getOrCreate()` picks it up automatically. If you used a custom profile name, pass it explicitly in code:
 
-**3. Test the connection**
+```python
+# Serverless (preferred — no cluster to manage):
+spark = DatabricksSession.builder.profile("steff_horemans").serverless(True).getOrCreate()
+
+# Alternative — specific cluster:
+# spark = DatabricksSession.builder.profile("steff_horemans").clusterId("<cluster-id>").getOrCreate()
+# Find cluster IDs with: databricks clusters list --profile steff_horemans
+```
+
+**3. Select your cluster in the VS Code extension**
+
+In the Databricks panel, select your cluster under **Cluster**. The extension writes the cluster ID to the local config, which Databricks Connect uses to know which cluster to connect to.
+
+**4. Test the connection**
 
 Open a Python terminal in VS Code and run:
 

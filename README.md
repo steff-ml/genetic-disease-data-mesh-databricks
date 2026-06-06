@@ -90,7 +90,7 @@ The Discovery domain publishes `patient_mutation_profile` as a cross-domain data
 
 ## Project Status
 
-**Early stage — Product 1 in build.** The trial eligibility catalogue (`clinical.gold.trial_eligibility_catalogue`) is the first data product in development. Patient-level matching products require the genomics layer and follow in later build phases.
+**Phase 1 underway — Bronze source exploration complete.** Three of the four planned Bronze sources for the trial eligibility catalogue have been explored (ClinicalTrials.gov, EU CTR / CTIS, FDA openFDA). EudraCT was investigated and found non-viable (REST API decommissioned; source frozen since January 2023). Exploration notebooks and consolidated data quality findings are in `exploratory/`. The `trial_eligibility_catalogue/` Databricks Asset Bundle is initialised. Patient-level matching products require the genomics layer and follow in later build phases.
 
 ---
 
@@ -121,7 +121,14 @@ genetic-disease-data-mesh-databricks/
 │   ├── contributing.md                # How to contribute (currently closed)
 │   └── changelog.md                   # Version history
 │
-└── (source code folders to be added)
+├── exploratory/                        # Bronze source exploration notebooks (ungoverned, not part of DLT pipelines)
+│   ├── ctgov_first_look.py             # ClinicalTrials.gov v2 API — endpoints, schema, quality concerns
+│   ├── eu_ctr_first_look.py            # EU CTR / CTIS API — endpoints, schema, quality concerns
+│   ├── fda_approvals_first_look.py     # FDA openFDA label + drugsfda — endpoints, schema, quality concerns
+│   ├── authentication_test.py          # Databricks Connect smoke test
+│   └── notes.md                        # Consolidated source notes for all sources investigated
+│
+└── trial_eligibility_catalogue/        # Databricks Asset Bundle — DLT pipelines, tests, fixtures for Product 1
 
 ```
 

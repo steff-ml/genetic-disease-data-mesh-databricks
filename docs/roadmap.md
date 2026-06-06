@@ -10,6 +10,15 @@ The roadmap prioritises the **Clinical domain first** — ingesting and structur
 
 **Goal**: produce `gold.trial_eligibility_catalogue` as the first published data product.
 
+**Source exploration — complete (2026-06-06)**
+
+Before any ingestion pipeline is built, the confirmed public sources were explored to establish record counts, endpoint behaviour, and data quality risks. Findings are in `exploratory/notes.md` and the corresponding `*_first_look.py` notebooks.
+
+- **ClinicalTrials.gov**: ~488 DMD records; ~112 pipeline-relevant. Single-page full refresh at `pageSize=1000`. Main risk: `eligibilityCriteria` is a free-text blob requiring Silver NLP.
+- **EU CTR / CTIS**: ~31 DMD records (post-2023 only). API undocumented — endpoints reverse-engineered from JS bundle. Two-call pattern required: search + per-trial retrieve for eligibility text.
+- **EudraCT (legacy)**: REST API decommissioned (HTTP 404). 108 DMD records visible in web UI only. No automated pipeline viable. CTIS is the correct ongoing EU source; manual one-time extraction documented as fallback.
+- **FDA openFDA**: 24 label records match DMD; 8 approved drugs identified. Genetic eligibility parseable for AONs via consistent phrase pattern; ELEVIDYS and givinostat require name-based NLP coverage.
+
 | Step | Task | Output |
 |------|------|--------|
 | 1.1 | Ingest ClinicalTrials.gov API for all DMD trials (condition: "Duchenne Muscular Dystrophy") | `bronze.clinicaltrials_raw` |
