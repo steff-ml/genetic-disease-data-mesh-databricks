@@ -284,3 +284,58 @@ well within rate limits at 1 req/s.
    the pathogenicity classification cannot be assessed. Silver should treat null `last_evaluated` as
    low-confidence and down-weight such records in the ADR-06 conflict resolution logic. This is particularly
    relevant for historical DMD submissions predating the 2015 ACMG classification standards.
+
+---
+
+## Ensembl Exon Reference
+
+**Notebook**: `ensembl_exons_first_look.py` | **Target**: `discovery.bronze.ensembl_exons_raw` | **Date**: 2026-06-06
+
+### Purpose
+
+This is a reference dataset, not a variant database. Ensembl exon coordinates are the lookup table required
+to implement the reading frame rule in Silver: both LOVD (`position_mRNA`) and ClinVar (HGVS cDNA notation)
+return nucleotide coordinate ranges but not discrete exon numbers. Silver maps those coordinate ranges onto
+this exon table to recover affected exon indices, then computes `(sum of affected exon sizes) mod 3`.
+
+### Endpoint
+
+```
+GET https://rest.ensembl.org/overlap/id/ENST00000357033?feature=exon
+    Accept: application/json
+→ Returns all exon objects overlapping the canonical Dp427m transcript region
+→ Filter: Parent == "ENST00000357033" to isolate canonical 79 exons
+```
+
+Selected over `GET /lookup/id/ENST00000357033?expand=1` because only the overlap endpoint returns `rank`
+(the clinically meaningful exon number) and `ensembl_phase`/`ensembl_end_phase` (reading frame offsets).
+The lookup endpoint with `expand=1` omits both fields.
+
+Public, no authentication. Rate limit: 15 req/s. Single API call — no pagination needed.
+
+### Record counts
+
+**79 rows** — one per exon of `ENST00000357033` (Dp427m). The raw overlap response contains 300–600 exon
+records across all DMD isoforms (Dp427b, Dp427p, Dp260, Dp140, Dp116, Dp71); the `Parent` filter isolates
+the canonical 79. Bronze ingestion frequency: monthly or on Ensembl release (coordinates are stable within
+a GRCh38 patch series but can shift between major releases).
+
+### Data quality concerns
+
+1. **Multi-isoform contamination in the overlap response.** The `overlap/id/` endpoint scoped to a
+   transcript ID returns exons from all transcripts overlapping the same genomic region, not just
+   `ENST00000357033`. Without `Parent == "ENST00000357033"` filtering, alternative DMD isoforms produce
+   duplicate exon IDs at different rank positions and an incorrect exon count. The notebook asserts
+   `count == 79` and rank uniqueness. A production DLT pipeline needs
+   `@dlt.expect_or_quarantine("exon_count_79")` on the Silver `exon_reference` table.
+
+2. **Phase chain consistency must be validated.** `ensembl_end_phase` of exon N must equal
+   `ensembl_phase` of exon N+1. A single broken link in the chain corrupts the cumulative reading frame
+   derivation for all downstream exons. The notebook asserts this explicitly. Production pipeline needs
+   `@dlt.expect_or_quarantine("phase_chain_consistent")` at Silver.
+
+3. **Assembly version drift between ingestion runs.** Ensembl coordinates are GRCh38 but can shift between
+   major Ensembl release series if the DMD gene model is revised. The `api_version` provenance field
+   captures the Ensembl REST server release to enable drift detection. The Silver `exon_reference` table
+   must validate that `assembly` matches the assembly assumed by LOVD and ClinVar variant records before
+   performing the cDNA-to-exon coordinate join. Mismatch would silently produce off-by-one exon assignments.
