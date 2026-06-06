@@ -1,5 +1,5 @@
 # Genetic Disease Data Mesh for Databricks DRAFT
-A governed, continuously updated data platform linking genetic mutation profiles to therapeutic eligibility for Duchenne Muscular Dystrophy — built on the Databricks medallion architecture, designed to extend to other rare genetic diseases.
+A governed, continuously updated data platform linking genetic mutation profiles to therapeutic eligibility for Duchenne Muscular Dystrophy built on the Databricks medallion architecture, designed to extend to other rare genetic diseases.
 
 ---
 
@@ -33,6 +33,7 @@ See [docs/data-products.md](docs/data-products.md) for schemas, access methods, 
 ## Architecture (Planned)
 
 The platform follows the Databricks medallion architecture across two data mesh domains.
+```
 
 ┌─────────────────────────────────┐     ┌──────────────────────────────────┐
 │        DISCOVERY DOMAIN         │     │          CLINICAL DOMAIN          │
@@ -47,7 +48,7 @@ The platform follows the Databricks medallion architecture across two data mesh 
 │  dmd.nl       ref    mutation_  │     │                                   │
 │               data   profile    │     │                                   │
 └─────────────────────────────────┘     └──────────────────────────────────┘
-
+```
 
 The Discovery domain publishes `patient_mutation_profile` as a cross-domain data product under a versioned contract. The Clinical domain subscribes to it to produce `patient_trial_eligibility` — the primary analytical output.
 
