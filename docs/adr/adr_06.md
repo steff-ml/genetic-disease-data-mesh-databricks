@@ -110,6 +110,8 @@ The maximum coverage principle reflects the clinical importance of the mutation 
 - Silver deduplication and conflict-flagging logic is established before Gold promotion; the `classification_conflict` and `source_conflict` flag schema is defined in Silver tables
 - The Reference domain runs its own ingestion independently; Discovery and Clinical consume from `reference.curated.*` rather than each querying HPO and HGNC directly
 
+**Note added 2026-06-06 — EudraCT investigation**: EudraCT's informal REST endpoint (`/ctr-search/rest/search`) is decommissioned — HTTP 404 on all variants. The source is frozen (no new records since January 2023; CTIS became mandatory for new EU trials from that date). No automated ingestion pipeline is viable. The 108 DMD records visible in the EudraCT web UI are the final count; a manual one-time extraction is documented in `exploratory/notes.md` as a fallback if historical completeness is required. CTIS (the "EU Clinical Trials Register" entry in this ADR) is confirmed as the correct canonical source for all ongoing EU trial coverage.
+
 ### Compliance implications
 
 - Conflict flagging rather than silent resolution satisfies the ALCOA+ Accurate requirement: data with unresolved quality questions is not published as authoritative to downstream consumers
