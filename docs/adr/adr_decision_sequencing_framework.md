@@ -25,7 +25,7 @@ How artificial intelligence is used — both in building this project and in gov
 
 | Decision | Description | Reversibility | Dependency | Information Readiness | Decision trigger | Revisit trigger | Status | Audience |
 |----------|-------------|---------------|------------|-----------------------|------------------|-----------------|--------|----------|
-| [ADR-00](adr_00.md) | Use of AI in project development | Adjustable | Independent | Decidable now | Before any building | Changes in AI services (quality competitor, throttling) or in the regulatory framework | Done | Governance |
+| [ADR-00](adr_00.md) | Use of AI in project development | Adjustable | Independent | Decidable now | Before any building | Changes in AI services (quality competitor, throttling) or in the regulatory framework | Draft | Governance |
 | [ADR-20](adr_20.md) | GenAI extraction model governance | Costly. Prompt and model changes affect extraction quality and must be validated before deployment; audit trail obligations make ad-hoc changes costly. | Blocks: Production extraction pipeline deployment. Depends on: ADR-10 (scope defines what the model must do; governance defines how it does it safely). | Decidable before the extraction pipeline goes to production. | Before extraction pipeline build. | Model deprecation by provider, significant change in extraction quality, or new regulatory requirement for AI in clinical data pipelines. | Draft | Governance |
 
 ---
