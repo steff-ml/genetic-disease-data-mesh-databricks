@@ -152,3 +152,77 @@ Ataluren (TRANSLARNA) — EMA approved only; not FDA approved. Ingested via EMA 
 2. **Genetic eligibility parseable for AONs only.** The four AONs use the consistent phrase `"amenable to exon N skipping"` — one regex covers all. ELEVIDYS and givinostat carry no exon-level text. Silver NLP must handle each drug by name with explicit coverage tests; new approvals will silently produce null `target_exon` values if only pattern-matching is used.
 
 3. **Only current label version accessible via openFDA.** EXONDYS 51 is on version 15 — each version may have altered the indication, patient population, or age window. Tracking label history requires the FDA bulk download files or DailyMed FHIR History API — a separate ingestion pathway not covered by this exploration.
+
+---
+
+## LOVD (Leiden Open Variation Database)
+
+**Notebook**: `lovd_first_look.py` | **Target**: `discovery.bronze.lovd_variants_raw` | **Date**: 2026-06-06
+
+### Endpoints
+
+The LOVD3 REST API base is `https://databases.lovd.nl/shared/api/rest.php`. The API is documented in the
+LOVDnl/LOVD3 GitHub repository (`src/api.php`). The website prohibits web scraping — the REST API is the
+only authorised programmatic access method.
+
+```
+GET https://databases.lovd.nl/shared/api/rest.php/variants/DMD
+    ?show_variant_effect=1
+    &start={1-based offset}     # pagination
+→ Atom XML (default) or JSON (Accept: application/json)
+→ OpenSearch pagination: <os:totalResults>, <os:startIndex>, <os:itemsPerPage>
+```
+
+The gene metadata endpoint provides a connectivity check:
+
+```
+GET https://databases.lovd.nl/shared/api/rest.php/genes/DMD
+→ Gene record: symbol, chromosome, transcript, curator, created/updated dates
+```
+
+The `/variants/DMD/unique` endpoint (deduplicated by `Variant/DNA` + `Variant/DBID`) was not selected
+for Bronze because it collapses multi-lab submissions, losing per-submitter pathogenicity calls needed
+for ADR-06 conflict detection.
+
+Public, no authentication. No documented rate limit — polite 1 req/s enforced in notebook.
+Default response is Atom XML; JSON requested via `Accept: application/json` header.
+
+### Record counts
+
+| Metric | Count |
+|--------|-------|
+| Total public variants (all submissions) | ~41,538 |
+| Unique public DNA variants | ~10,136 |
+| Hidden variants | ~1,413 |
+| Individuals with public variants | ~61,781 |
+| Reference transcript | NM_004006.2 (Dp427m) |
+| Database version at exploration | DMD:260512 (May 2026) |
+
+At 100 per page, full ingestion requires ~415 pages. At 1 req/s: ~7 minutes. Monthly full replacement
+recommended; incremental delta via `edited_date` high-water mark is possible but adds operational
+complexity for a dataset this size.
+
+### Data quality concerns
+
+1. **`exon_raw` field uses LOVD-specific notation, not canonical HGVS.** The `exon` field contains
+   strings like `"44i_52i"` or `"0i_1i"` — the `i` suffix denotes intronic boundary, and `_` separates
+   start from end exon. This notation must be regex-parsed at Silver to extract integer exon numbers for
+   the reading frame computation. Malformed or null `exon_raw` values block the entire `reading_frame_effect`
+   derivation — highest-risk field in the pipeline. Requires `@dlt.expect_or_quarantine("exon_parseable")`.
+
+2. **`Variant/DNA` notation is heterogeneous — three distinct styles present.** Canonical HGVS cDNA
+   (`c.6439del`), legacy uncertain-boundary notation (`c.(?_432-1)_(6438+1_?)del`), and fully uncertain
+   records (`c.?`) all appear in the same response. The `hgvs` Python library will fail strict parsing on
+   the legacy style; Silver must implement a fallback chain: strict HGVS → lenient regex → `exon_raw` →
+   quarantine. Records where both `Variant/DNA = "c.?"` and `exon_raw` is null cannot contribute to
+   reading frame computation and must be quarantined with `action_required = 'manual_review'`.
+
+3. **Pathogenicity encoding is dual-layer and LOVD-specific — not ACMG 5-tier.** LOVD encodes
+   pathogenicity as `+` (pathogenic), `+?` (likely pathogenic), `-` (benign), `-?` (likely benign),
+   `?` (VUS), `.` (not provided) in both `effect_reported` (submitter call) and `effect_concluded`
+   (curator call). Silver must map both fields to ACMG 5-tier and then implement ADR-06: disagreement
+   between `effect_concluded` and the ClinVar pathogenicity for the same `clinvar_id` sets
+   `classification_conflict = true`. The `clinvar_id` field is expected to be null for a large fraction
+   of records (~60-70% estimated), making cross-source conflict detection only partial. Additionally,
+   `effect_reported` vs `effect_concluded` disagreement within LOVD itself is a secondary conflict
+   signal that Silver should also surface.
