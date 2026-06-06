@@ -1,0 +1,1 @@
+Run the doc-sync agent. Read the git diff against main, identify what changed, and propose documentation updates to the appropriate files. Present all proposed changes as diffs for human review before writing anything. Do not commit.
