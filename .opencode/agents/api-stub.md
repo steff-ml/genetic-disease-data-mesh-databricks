@@ -8,7 +8,6 @@ description: |
   Output is a disposable notebook in personal.exploration — never referenced
   from production pipelines.
 model: qwen3.5:9b-32k
-tools: none
 ---
 
 ## Role
