@@ -136,6 +136,18 @@ Create the personal schema if it does not exist, set it as the session default, 
 from databricks.connect import DatabricksSession  # noqa: E402
 
 # Connects to the remote cluster via Databricks Connect — execution happens on Databricks.
+from pyspark.sql.types import StringType, StructField, StructType  # noqa: E402
+
+# Always provide an explicit schema — all-null columns cannot be type-inferred by Spark.
+# Adjust field names and nullability to match the actual bronze row dict.
+BRONZE_SCHEMA = StructType([
+    StructField("field_one",           StringType(), True),
+    StructField("source_system",       StringType(), False),
+    StructField("ingestion_timestamp", StringType(), False),
+    StructField("api_version",         StringType(), False),
+    StructField("source_url",          StringType(), False),
+])
+
 spark = DatabricksSession.builder.profile("steff_horemans").serverless(True).getOrCreate()
 # Alternative if serverless is not available:
 # spark = DatabricksSession.builder.profile("steff_horemans").clusterId("<cluster-id>").getOrCreate()
@@ -143,7 +155,7 @@ spark = DatabricksSession.builder.profile("steff_horemans").serverless(True).get
 spark.sql("CREATE SCHEMA IF NOT EXISTS workspace.steff_horemans")
 spark.sql("USE workspace.steff_horemans")
 
-df = spark.createDataFrame(rows)
+df = spark.createDataFrame(rows, schema=BRONZE_SCHEMA)
 (
     df.write
     .format("delta")

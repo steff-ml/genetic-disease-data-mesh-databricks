@@ -152,3 +152,190 @@ Ataluren (TRANSLARNA) — EMA approved only; not FDA approved. Ingested via EMA 
 2. **Genetic eligibility parseable for AONs only.** The four AONs use the consistent phrase `"amenable to exon N skipping"` — one regex covers all. ELEVIDYS and givinostat carry no exon-level text. Silver NLP must handle each drug by name with explicit coverage tests; new approvals will silently produce null `target_exon` values if only pattern-matching is used.
 
 3. **Only current label version accessible via openFDA.** EXONDYS 51 is on version 15 — each version may have altered the indication, patient population, or age window. Tracking label history requires the FDA bulk download files or DailyMed FHIR History API — a separate ingestion pathway not covered by this exploration.
+
+---
+
+## LOVD (Leiden Open Variation Database)
+
+**Notebook**: `lovd_first_look.py` | **Target**: `discovery.bronze.lovd_variants_raw` | **Date**: 2026-06-06
+
+### Endpoints
+
+The LOVD3 REST API base is `https://databases.lovd.nl/shared/api/rest.php`. The API is documented in the
+LOVDnl/LOVD3 GitHub repository (`src/api.php`). The website prohibits web scraping — the REST API is the
+only authorised programmatic access method.
+
+```
+GET https://databases.lovd.nl/shared/api/rest.php/variants/DMD
+    ?show_variant_effect=1
+    &start={1-based offset}     # pagination
+→ Atom XML (default) or JSON (Accept: application/json)
+→ OpenSearch pagination: <os:totalResults>, <os:startIndex>, <os:itemsPerPage>
+```
+
+The gene metadata endpoint provides a connectivity check:
+
+```
+GET https://databases.lovd.nl/shared/api/rest.php/genes/DMD
+→ Gene record: symbol, chromosome, transcript, curator, created/updated dates
+```
+
+The `/variants/DMD/unique` endpoint (deduplicated by `Variant/DNA` + `Variant/DBID`) was not selected
+for Bronze because it collapses multi-lab submissions, losing per-submitter pathogenicity calls needed
+for ADR-06 conflict detection.
+
+Public, no authentication. No documented rate limit — polite 1 req/s enforced in notebook.
+Default response is Atom XML; JSON requested via `Accept: application/json` header.
+
+### Record counts
+
+| Metric | Count |
+|--------|-------|
+| Total public variants (all submissions) | ~41,538 |
+| Unique public DNA variants | ~10,136 |
+| Hidden variants | ~1,413 |
+| Individuals with public variants | ~61,781 |
+| Reference transcript | NM_004006.2 (Dp427m) |
+| Database version at exploration | DMD:260512 (May 2026) |
+
+At 100 per page, full ingestion requires ~415 pages. At 1 req/s: ~7 minutes. Monthly full replacement
+recommended; incremental delta via `edited_date` high-water mark is possible but adds operational
+complexity for a dataset this size.
+
+### Data quality concerns
+
+1. **`exon_raw` is not returned by the shared `/variants/DMD` Atom endpoint.** The field is absent from
+   all records — the shared endpoint only returns `position_mRNA` (e.g. `NM_004006.2:c.-1289195_9085-18771`),
+   which contains cDNA coordinates but no discrete exon number. Exon numbers must be derived at Silver via
+   Ensembl coordinate lookup: map the cDNA position range against the NM_004006.2 exon coordinate table to
+   recover affected exon indices, then apply the reading frame rule. Records where `position_mRNA` is null
+   or unparseable cannot contribute to reading frame computation and must be quarantined with
+   `action_required = 'manual_review'`. Note: individual LOVD installations (non-shared) do expose `exon_raw`
+   — if the shared endpoint proves insufficient, a direct query to the Leiden DMD database instance is the
+   fallback.
+
+2. **`Variant/DNA` notation is heterogeneous — three distinct styles present.** Canonical HGVS cDNA
+   (`c.6439del`), legacy uncertain-boundary notation (`c.(?_432-1)_(6438+1_?)del`), and fully uncertain
+   records (`c.?`) all appear in the same response. The `hgvs` Python library will fail strict parsing on
+   the legacy style; Silver must implement a fallback chain: strict HGVS → lenient regex → `exon_raw` →
+   quarantine. Records where both `Variant/DNA = "c.?"` and `exon_raw` is null cannot contribute to
+   reading frame computation and must be quarantined with `action_required = 'manual_review'`.
+
+3. **Pathogenicity encoding is dual-layer and LOVD-specific — not ACMG 5-tier.** LOVD encodes
+   pathogenicity as `+` (pathogenic), `+?` (likely pathogenic), `-` (benign), `-?` (likely benign),
+   `?` (VUS), `.` (not provided) in both `effect_reported` (submitter call) and `effect_concluded`
+   (curator call). Silver must map both fields to ACMG 5-tier and then implement ADR-06: disagreement
+   between `effect_concluded` and the ClinVar pathogenicity for the same `clinvar_id` sets
+   `classification_conflict = true`. The `clinvar_id` field is expected to be null for a large fraction
+   of records (~60-70% estimated), making cross-source conflict detection only partial. Additionally,
+   `effect_reported` vs `effect_concluded` disagreement within LOVD itself is a secondary conflict
+   signal that Silver should also surface.
+
+---
+
+## ClinVar
+
+**Notebook**: `clinvar_first_look.py` | **Target**: `discovery.bronze.clinvar_submissions_raw` | **Date**: 2026-06-06
+
+### Endpoints
+
+NCBI E-utilities with `usehistory=y` strategy — ESearch populates the NCBI History server with all DMD
+variant UIDs in a single call; ESummary retrieves structured JSON in batches against that stored result set.
+
+```
+GET https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi
+    ?db=clinvar&term=DMD[gene]+AND+Homo+sapiens[orgn]&retmax=0&usehistory=y
+→ Returns WebEnv + query_key for paginated retrieval
+
+GET https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi
+    ?db=clinvar&query_key={key}&WebEnv={env}&retstart={offset}&retmax=500&retmode=json
+→ Structured summary record per variation ID
+```
+
+Public, no authentication. Rate limit: 3 req/s unauthenticated, 10 req/s with free NCBI API key
+(`NCBI_API_KEY` env var). The ClinVar submission API (`submit.ncbi.nlm.nih.gov`) was ruled out — POST-only
+for creating submissions, no query interface.
+
+**Production ingestion alternative**: the ClinVar FTP weekly snapshot (`variant_summary.txt.gz`) is strongly
+preferred over paginated API calls — single download, no rate limit, same field coverage, clean weekly
+release cadence. The notebook documents both approaches; the FTP path should be used in the DLT pipeline.
+
+### Record counts
+
+~2,000–4,000 DMD variation IDs expected. At `retmax=500`, full ingestion requires 4–8 ESummary calls —
+well within rate limits at 1 req/s.
+
+### Data quality concerns
+
+1. **Exon coordinates are absent from ESummary.** ClinVar does not return a structured `exon_number` field.
+   Reading frame computation from ClinVar data alone is not possible. Silver must parse the HGVS cDNA notation
+   (e.g. `NM_004006.2:c.649_3259del`) via Ensembl VEP or coordinate lookup against the NM_004006.2 exon table
+   to recover affected exon indices — same enrichment step required as for LOVD `position_mRNA`. This is the
+   single most significant gap for using ClinVar as a mutation-intrinsic source.
+
+2. **`Conflicting interpretations of pathogenicity` is a valid classification value.** ClinVar submitters
+   sometimes disagree, and ClinVar surfaces this explicitly as a classification rather than resolving it.
+   Records in this state cannot serve as a clean reference for the ADR-06 LOVD cross-source conflict rule —
+   they must be flagged with a separate `classification_conflict_internal` marker before any LOVD comparison.
+   Silver must treat these as requiring expert review (`action_required = 'expert_review'`) regardless of the
+   LOVD call.
+
+3. **`last_evaluated` is frequently null for older submissions.** Without an evaluation date, the currency of
+   the pathogenicity classification cannot be assessed. Silver should treat null `last_evaluated` as
+   low-confidence and down-weight such records in the ADR-06 conflict resolution logic. This is particularly
+   relevant for historical DMD submissions predating the 2015 ACMG classification standards.
+
+---
+
+## Ensembl Exon Reference
+
+**Notebook**: `ensembl_exons_first_look.py` | **Target**: `discovery.bronze.ensembl_exons_raw` | **Date**: 2026-06-06
+
+### Purpose
+
+This is a reference dataset, not a variant database. Ensembl exon coordinates are the lookup table required
+to implement the reading frame rule in Silver: both LOVD (`position_mRNA`) and ClinVar (HGVS cDNA notation)
+return nucleotide coordinate ranges but not discrete exon numbers. Silver maps those coordinate ranges onto
+this exon table to recover affected exon indices, then computes `(sum of affected exon sizes) mod 3`.
+
+### Endpoint
+
+```
+GET https://rest.ensembl.org/overlap/id/ENST00000357033?feature=exon
+    Accept: application/json
+→ Returns all exon objects overlapping the canonical Dp427m transcript region
+→ Filter: Parent == "ENST00000357033" to isolate canonical 79 exons
+```
+
+Selected over `GET /lookup/id/ENST00000357033?expand=1` because only the overlap endpoint returns `rank`
+(the clinically meaningful exon number) and `ensembl_phase`/`ensembl_end_phase` (reading frame offsets).
+The lookup endpoint with `expand=1` omits both fields.
+
+Public, no authentication. Rate limit: 15 req/s. Single API call — no pagination needed.
+
+### Record counts
+
+**79 rows** — one per exon of `ENST00000357033` (Dp427m). The raw overlap response contains 300–600 exon
+records across all DMD isoforms (Dp427b, Dp427p, Dp260, Dp140, Dp116, Dp71); the `Parent` filter isolates
+the canonical 79. Bronze ingestion frequency: monthly or on Ensembl release (coordinates are stable within
+a GRCh38 patch series but can shift between major releases).
+
+### Data quality concerns
+
+1. **Multi-isoform contamination in the overlap response.** The `overlap/id/` endpoint scoped to a
+   transcript ID returns exons from all transcripts overlapping the same genomic region, not just
+   `ENST00000357033`. Without `Parent == "ENST00000357033"` filtering, alternative DMD isoforms produce
+   duplicate exon IDs at different rank positions and an incorrect exon count. The notebook asserts
+   `count == 79` and rank uniqueness. A production DLT pipeline needs
+   `@dlt.expect_or_quarantine("exon_count_79")` on the Silver `exon_reference` table.
+
+2. **Phase chain consistency must be validated.** `ensembl_end_phase` of exon N must equal
+   `ensembl_phase` of exon N+1. A single broken link in the chain corrupts the cumulative reading frame
+   derivation for all downstream exons. The notebook asserts this explicitly. Production pipeline needs
+   `@dlt.expect_or_quarantine("phase_chain_consistent")` at Silver.
+
+3. **Assembly version drift between ingestion runs.** Ensembl coordinates are GRCh38 but can shift between
+   major Ensembl release series if the DMD gene model is revised. The `api_version` provenance field
+   captures the Ensembl REST server release to enable drift detection. The Silver `exon_reference` table
+   must validate that `assembly` matches the assembly assumed by LOVD and ClinVar variant records before
+   performing the cDNA-to-exon coordinate join. Mismatch would silently produce off-by-one exon assignments.
