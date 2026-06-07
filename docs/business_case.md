@@ -81,6 +81,8 @@ Adherence to [FAIR data principles (Wilkinson et al., 2016, *Scientific Data*)](
 
 **Value delivered**: replaces a manual, multi-system, expert-dependent process with a structured, auditable query. Scales across an entire patient registry rather than one patient at a time. Updates automatically as trials open, close, or revise eligibility criteria.
 
+**How to consume it**: an interactive web application where a coordinator enters a patient identifier or HGVS variant and receives a ranked list of eligible trials with evidence level and exclusion reasons. For registries and EHR systems that manage patient data programmatically, a REST API over the Gold table is the right interface — the application can be embedded in an existing registry portal without requiring end users to interact with the underlying data platform.
+
 ---
 
 ### Patient-Therapy Matching
@@ -92,6 +94,8 @@ Adherence to [FAIR data principles (Wilkinson et al., 2016, *Scientific Data*)](
 **How it works**: a constrained version of patient-trial matching, filtered to `evidence_level = approved`. The output is a short list of approved therapies with eligibility flags and the specific mutation-level reasoning — for example: *"eligible for exon 51 skipping: deletion of exons 49–50 is out-of-frame and restored to in-frame by skipping exon 51."*
 
 **Value delivered**: provides an auditable, reproducible eligibility determination grounded in the published reading frame rule ([Aartsma-Rus et al., 2009](https://pubmed.ncbi.nlm.nih.gov/19156838/)) and current FDA/EMA approval criteria, replacing informal expert judgement with a documented, versioned data product output.
+
+**How to consume it**: a point-of-care lookup application — a simple, ideally mobile-friendly interface that accepts a mutation as input and returns the eligibility list with the plain-language reasoning (e.g. *"eligible for exon 51 skipping: deletion of exons 49–50 is out-of-frame and restored to in-frame by skipping exon 51"*). The output is compact enough to be rendered as a section of a clinical letter or PDF report. For EHR integration, the same result set is accessible via a structured API response that clinical systems can consume directly.
 
 ---
 
@@ -105,6 +109,8 @@ Adherence to [FAIR data principles (Wilkinson et al., 2016, *Scientific Data*)](
 
 **Value delivered**: de-risks trial design decisions. A company considering a new exon-skipping combination can answer "how many patients exist for this approach" before investing in protocol development. This is particularly valuable for the ~73% of patients not covered by approved therapies, where the addressable population for any new approach is small and must be estimated precisely.
 
+**How to consume it**: a self-service analytical dashboard with interactive filters — trial designers set mutation class, exon target range, and therapeutic approach to size the addressable population dynamically. Results are exportable to spreadsheet for inclusion in trial feasibility assessments and regulatory submissions. Biostatisticians and data scientists who need custom analyses beyond the dashboard can access the Gold table directly via SQL.
+
 ---
 
 ### Mutation Gap Analysis
@@ -117,6 +123,8 @@ Adherence to [FAIR data principles (Wilkinson et al., 2016, *Scientific Data*)](
 
 **Value delivered**: makes the unmet need visible and specific rather than approximate. Advocacy organisations such as Parent Project Muscular Dystrophy or TREAT-NMD can use this to direct research funding toward the mutation classes with the largest underserved populations. Drug developers can identify white space. The [Denton et al. (2021)](https://pmc.ncbi.nlm.nih.gov/articles/PMC8025897/) finding, that data silos cause redundant studies rather than coordinated coverage, is exactly the failure this use case prevents.
 
+**How to consume it**: a published dashboard with a visual mutation coverage map — a heatmap or Sankey diagram showing which mutation classes are covered by approved therapies, active trials, or neither, with patient counts for each segment. Suitable for inclusion in advocacy organisation annual reports and regulatory submissions as a static export. The dashboard refreshes automatically on each pipeline run, so the numbers are always current without manual intervention.
+
 ---
 
 ### Proactive Trial Alerts for Patient Registries
@@ -128,6 +136,8 @@ Adherence to [FAIR data principles (Wilkinson et al., 2016, *Scientific Data*)](
 **How it works**: a triggered version of patient-trial matching. When `gold.trial_eligibility_catalogue` is updated with a new or modified trial record, the eligibility join is re-run for the affected trial and the delta (patients who are newly eligible relative to the previous version) is surfaced as a notification or report. This requires patient mutation profiles to be maintained in the system, which is a data governance decision each registry must make.
 
 **Value delivered**: converts the mutation-to-trial matching system from a query tool into an active recruitment support system. For rare diseases where eligible patients are geographically dispersed and no single site has enough of them, proactive identification is the difference between a trial recruiting on schedule and one that fails to reach statistical power.
+
+**How to consume it**: an automated notification pipeline — when newly eligible patients are detected after a pipeline refresh, a triggered report is generated and dispatched via email or webhook to the relevant registry or clinical coordinator. Configurable per registry: immediate alert on detection, daily digest, or weekly summary. The eligibility delta table underlying the notifications is also consumable via API for registries that want to pull rather than receive push notifications, and for integration with registry management systems that maintain their own communication workflows.
 
 
 ## Conclusion
