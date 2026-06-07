@@ -88,6 +88,18 @@ Apply the same flagging as LOVD vs ClinVar disagreement. If clinical significanc
 
 No conflict. Each source is additive. A variant present in LOVD but not ClinVar is still eligible for Gold promotion. A variant in ClinVar but not LOVD is also eligible. The two sources are not mutually exclusive.
 
+**ClinVar internal classification conflict — `Conflicting interpretations of pathogenicity`**
+
+ClinVar uses `Conflicting interpretations of pathogenicity` as a first-class classification value when its own submitters disagree. This is distinct from the LOVD-vs-ClinVar cross-source conflict above. A ClinVar record in this state cannot serve as a clean reference for the cross-source conflict rule: it has no single authoritative pathogenicity tier to compare against the LOVD `effect_concluded` value.
+
+Silver must apply a two-layer conflict flag:
+- `classification_conflict_internal = true` — set on any ClinVar record where `clinical_significance.description = 'Conflicting interpretations of pathogenicity'`, before the cross-source join. This flag propagates to the joined `silver.dmd_variants` record.
+- `classification_conflict = true` — set on the joined record when LOVD and ClinVar disagree on pathogenicity tier, per the existing rule above.
+
+A record with `classification_conflict_internal = true` must be set to `action_required = 'expert_review'` regardless of the LOVD call — even if LOVD and ClinVar happen to agree on a tier, the internal ClinVar disagreement means that agreement is with an unresolved classification. Both flags may be true simultaneously.
+
+Note added 2026-06-06 — ClinVar exploration (`clinvar_first_look.py`): confirmed that `Conflicting interpretations of pathogenicity` appears as a native `clinical_significance.description` value for DMD variants. Silver implementation must treat it as a distinct state, not map it to any of the five ACMG tiers before the cross-source comparison.
+
 ---
 
 ### Alternatives considered

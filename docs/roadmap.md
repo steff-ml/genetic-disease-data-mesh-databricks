@@ -18,6 +18,9 @@ Before any ingestion pipeline is built, the confirmed public sources were explor
 - **EU CTR / CTIS**: ~31 DMD records (post-2023 only). API undocumented — endpoints reverse-engineered from JS bundle. Two-call pattern required: search + per-trial retrieve for eligibility text.
 - **EudraCT (legacy)**: REST API decommissioned (HTTP 404). 108 DMD records visible in web UI only. No automated pipeline viable. CTIS is the correct ongoing EU source; manual one-time extraction documented as fallback.
 - **FDA openFDA**: 24 label records match DMD; 8 approved drugs identified. Genetic eligibility parseable for AONs via consistent phrase pattern; ELEVIDYS and givinostat require name-based NLP coverage.
+- **LOVD**: ~41,538 total public submissions; ~10,136 unique DMD variants. Full refresh via Atom XML REST API (~415 pages at 100/page). Key gap: `exon_raw` absent from shared endpoint — exon numbers must be derived at Silver from `position_mRNA` via Ensembl coordinate lookup.
+- **ClinVar**: ~2,000–4,000 DMD variation IDs. Production ingestion path: FTP weekly snapshot (`variant_summary.txt.gz`) preferred over paginated E-utilities API. Key gap: exon coordinates absent — HGVS-to-exon mapping requires same Ensembl lookup as LOVD. `Conflicting interpretations of pathogenicity` is a native ClinVar classification value requiring a separate `classification_conflict_internal` flag at Silver, distinct from the LOVD-vs-ClinVar cross-source conflict rule in ADR-06.
+- **Ensembl**: 79 exon records for canonical Dp427m transcript (`ENST00000357033`). Single API call — no pagination. Monthly refresh or on Ensembl major release. Key risk: multi-isoform contamination in the overlap response — `Parent == "ENST00000357033"` filter required; production DLT needs `@dlt.expect_or_quarantine("exon_count_79")`.
 
 | Step | Task | Output |
 |------|------|--------|
