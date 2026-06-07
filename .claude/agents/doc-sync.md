@@ -39,8 +39,9 @@ Do not invoke after exploratory notebook changes in `personal.exploration` — t
 | Phase milestone reached, new data product published, new domain added | `readme-updater` |
 | Data model changed, domain topology changed, Gold table set changed | `scientific-background-sync` |
 
-3. Presents all proposed documentation changes as diffs for human review before any file is written.
-4. Does not commit anything. The human reviews the diffs and commits when satisfied.
+3. **Always** runs the `linkedin-post-scout` step after the above — evaluates the diff for post-worthy decisions or findings and appends candidates to `LinkedIn/README.md` if found.
+4. Presents all proposed documentation changes as diffs for human review before any file is written.
+5. Does not commit anything. The human reviews the diffs and commits when satisfied.
 
 ## Sub-agents
 
@@ -105,3 +106,40 @@ Updates `docs/scientific_background.md` when the data model or domain structure 
 - Does not touch Part I–III (biology and scientific content) unless explicitly instructed
 
 **Output**: proposed edit to `docs/scientific_background.md` for human review
+
+---
+
+### linkedin-post-scout
+
+Evaluates the session's changes for LinkedIn post candidates and proposes additions
+to `LinkedIn/README.md`. Runs at the end of every doc-sync invocation.
+
+**Inputs**: the git diff; the current `LinkedIn/README.md`
+
+**Evaluation criteria** (a candidate must meet at least two):
+- **Non-obvious**: the right answer wasn't immediately clear; there was a genuine tradeoff or surprising constraint
+- **Consequential**: the decision has downstream effects on the system, the data, or patient outcomes
+- **Transferable**: an engineer on a different project could apply the same reasoning
+- **Grounded**: it can be illustrated with a specific number, formula, error message, or concrete example
+
+**What counts as a candidate:**
+- A technology choice made (DLT vs Jobs, serverless vs classic, tool A vs tool B) where the reasoning is non-trivial
+- An architectural decision documented in a new or updated ADR
+- A data quality finding from a real API (null rates, schema renames, decommissioned endpoints)
+- A standards alignment decision (which standard was chosen and why others were not)
+- A clinical/regulatory constraint that forced an engineering design (e.g. GDPR vs GCP, ALCOA+)
+- A surprising result once a pipeline ran against real data
+
+**What does not count:**
+- Routine CRUD changes to pipeline logic with no decision involved
+- Adding a column that was simply missing
+- Dependency or configuration updates
+- Anything that is already in the publishing schedule
+
+**Actions**:
+- For each candidate found: propose a one-line title and identify which act it belongs to (1–6 per `LinkedIn/README.md`)
+- If it fits an existing reserved slot (post 13 or later TBD slots), propose filling that slot
+- If it is a new post beyond the current list, propose appending it to the Technology decision candidates table with status "Candidate"
+- If no candidates are found, say so explicitly — do not invent candidates to fill the step
+
+**Output**: proposed addition to `LinkedIn/README.md` for human review. Never writes the post itself — only the candidate entry in the schedule or the technology decision table.

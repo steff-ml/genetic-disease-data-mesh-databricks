@@ -1,0 +1,252 @@
+{
+  "_comment": [
+    "DMD Mutation Catalogue — Lakeview Dashboard template.",
+    "Export from the UI after first interactive build, then replace this file.",
+    "Deploy via: databricks bundle deploy --target dev",
+    "",
+    "To add this to databricks.yml:",
+    "  resources:",
+    "    dashboards:",
+    "      dmd_mutation_catalogue:",
+    "        display_name: DMD Mutation Catalogue",
+    "        file_path: ./dashboards/dmd_mutation_catalogue.lvdash.json",
+    "        warehouse_id: ${var.sql_warehouse_id}",
+    "",
+    "This JSON is the serialized_dashboard string from the Lakeview API.",
+    "Edit visually in the Databricks UI, then re-export with:",
+    "  export_dashboard_to_json() in exploratory/databricks_dashboard_iac.py"
+  ],
+  "pages": [
+    {
+      "name": "overview",
+      "displayName": "Variant Overview",
+      "layout": [
+        {
+          "widget": { "name": "kpi_total_variants" },
+          "position": { "x": 0, "y": 0, "width": 2, "height": 3 }
+        },
+        {
+          "widget": { "name": "kpi_conflict_rate" },
+          "position": { "x": 2, "y": 0, "width": 2, "height": 3 }
+        },
+        {
+          "widget": { "name": "kpi_unparseable_rate" },
+          "position": { "x": 4, "y": 0, "width": 2, "height": 3 }
+        },
+        {
+          "widget": { "name": "chart_mutation_type" },
+          "position": { "x": 0, "y": 3, "width": 6, "height": 6 }
+        },
+        {
+          "widget": { "name": "chart_exon_heatmap" },
+          "position": { "x": 0, "y": 9, "width": 6, "height": 8 }
+        }
+      ],
+      "widgets": [
+        {
+          "name": "kpi_total_variants",
+          "title": "Total Variants",
+          "description": "Unique variants in Gold after conflict resolution",
+          "spec": {
+            "version": 2,
+            "widgetType": "counter",
+            "encodings": {
+              "value": { "fieldName": "total_variants", "displayName": "Variants" }
+            }
+          },
+          "queries": [
+            {
+              "name": "kpi_total_variants_query",
+              "query": {
+                "datasetName": "variant_summary",
+                "fields": [{ "name": "total_variants", "expression": "total_variants" }],
+                "disaggregated": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "kpi_conflict_rate",
+          "title": "Classification Conflicts",
+          "description": "Variants where LOVD and ClinVar disagree on pathogenicity",
+          "spec": {
+            "version": 2,
+            "widgetType": "counter",
+            "encodings": {
+              "value": {
+                "fieldName": "conflict_count",
+                "displayName": "Conflicts",
+                "color": { "value": "#D9534F" }
+              }
+            }
+          },
+          "queries": [
+            {
+              "name": "kpi_conflict_query",
+              "query": {
+                "datasetName": "variant_summary",
+                "fields": [{ "name": "conflict_count", "expression": "conflict_count" }],
+                "disaggregated": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "kpi_unparseable_rate",
+          "title": "Unparseable HGVS",
+          "description": "Variants quarantined because HGVS could not be normalised",
+          "spec": {
+            "version": 2,
+            "widgetType": "counter",
+            "encodings": {
+              "value": {
+                "fieldName": "unparseable_count",
+                "displayName": "Quarantined",
+                "color": { "value": "#F0AD4E" }
+              }
+            }
+          },
+          "queries": [
+            {
+              "name": "kpi_unparseable_query",
+              "query": {
+                "datasetName": "variant_summary",
+                "fields": [{ "name": "unparseable_count", "expression": "unparseable_count" }],
+                "disaggregated": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "chart_mutation_type",
+          "title": "Variants by Mutation Type",
+          "spec": {
+            "version": 2,
+            "widgetType": "bar",
+            "encodings": {
+              "x": { "fieldName": "mutation_type", "displayName": "Mutation Type" },
+              "y": { "fieldName": "variant_count", "displayName": "Count" },
+              "color": { "fieldName": "clinical_significance", "displayName": "Pathogenicity" }
+            }
+          },
+          "queries": [
+            {
+              "name": "mutation_type_query",
+              "query": {
+                "datasetName": "variants_by_type",
+                "fields": [
+                  { "name": "mutation_type", "expression": "mutation_type" },
+                  { "name": "clinical_significance", "expression": "clinical_significance" },
+                  { "name": "variant_count", "expression": "variant_count" }
+                ],
+                "disaggregated": false
+              }
+            }
+          ]
+        },
+        {
+          "name": "chart_exon_heatmap",
+          "title": "Affected Exon Distribution (Exons 1–79)",
+          "description": "Darker = more variants affecting that exon. Use to identify mutation hotspots.",
+          "spec": {
+            "version": 2,
+            "widgetType": "heatmap",
+            "encodings": {
+              "x": { "fieldName": "exon_number", "displayName": "Exon" },
+              "y": { "fieldName": "clinical_significance", "displayName": "Pathogenicity" },
+              "color": { "fieldName": "variant_count", "displayName": "Variant Count" }
+            }
+          },
+          "queries": [
+            {
+              "name": "exon_heatmap_query",
+              "query": {
+                "datasetName": "variants_by_exon",
+                "fields": [
+                  { "name": "exon_number", "expression": "exon_number" },
+                  { "name": "clinical_significance", "expression": "clinical_significance" },
+                  { "name": "variant_count", "expression": "variant_count" }
+                ],
+                "disaggregated": false
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "action_queue",
+      "displayName": "Action Required",
+      "layout": [
+        {
+          "widget": { "name": "action_queue_table" },
+          "position": { "x": 0, "y": 0, "width": 12, "height": 14 }
+        }
+      ],
+      "widgets": [
+        {
+          "name": "action_queue_table",
+          "title": "Variants Requiring Expert Review",
+          "description": "Variants with classification_conflict=true or action_required='expert_review'. Resolve before Gold promotion.",
+          "spec": {
+            "version": 2,
+            "widgetType": "table",
+            "encodings": {
+              "columns": [
+                { "fieldName": "canonical_hgvs",           "displayName": "HGVS" },
+                { "fieldName": "lovd_classification",      "displayName": "LOVD" },
+                { "fieldName": "clinvar_classification",   "displayName": "ClinVar" },
+                { "fieldName": "action_required",          "displayName": "Action" },
+                { "fieldName": "vrs_allele_id",            "displayName": "VRS ID" },
+                { "fieldName": "ingestion_timestamp",      "displayName": "Last Updated" }
+              ]
+            }
+          },
+          "queries": [
+            {
+              "name": "action_queue_query",
+              "query": {
+                "datasetName": "action_required_variants",
+                "fields": [
+                  { "name": "canonical_hgvs",         "expression": "canonical_hgvs" },
+                  { "name": "lovd_classification",    "expression": "lovd_classification" },
+                  { "name": "clinvar_classification", "expression": "clinvar_classification" },
+                  { "name": "action_required",        "expression": "action_required" },
+                  { "name": "vrs_allele_id",          "expression": "vrs_allele_id" },
+                  { "name": "ingestion_timestamp",    "expression": "ingestion_timestamp" }
+                ],
+                "disaggregated": true
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "datasets": [
+    {
+      "name": "variant_summary",
+      "displayName": "Variant Summary KPIs",
+      "query": "SELECT\n  COUNT(*)                                              AS total_variants,\n  COUNT(*) FILTER (WHERE classification_conflict = true)  AS conflict_count,\n  COUNT(*) FILTER (WHERE hgvs_unparseable = true)         AS unparseable_count\nFROM discovery.silver.dmd_variants",
+      "type": "SQL"
+    },
+    {
+      "name": "variants_by_type",
+      "displayName": "Variants by Mutation Type and Pathogenicity",
+      "query": "SELECT\n  mutation_type,\n  clinical_significance,\n  COUNT(*) AS variant_count\nFROM discovery.gold.dmd_mutation_catalogue\nWHERE classification_conflict = false\nGROUP BY mutation_type, clinical_significance\nORDER BY variant_count DESC",
+      "type": "SQL"
+    },
+    {
+      "name": "variants_by_exon",
+      "displayName": "Variant Count by Affected Exon",
+      "query": "SELECT\n  exon_number,\n  clinical_significance,\n  COUNT(*) AS variant_count\nFROM discovery.gold.dmd_mutation_catalogue\nCROSS JOIN LATERAL EXPLODE(affected_exons) AS t(exon_number)\nWHERE classification_conflict = false\nGROUP BY exon_number, clinical_significance\nORDER BY exon_number",
+      "type": "SQL"
+    },
+    {
+      "name": "action_required_variants",
+      "displayName": "Variants Requiring Expert Review",
+      "query": "SELECT\n  canonical_hgvs,\n  lovd_classification,\n  clinvar_classification,\n  action_required,\n  vrs_allele_id,\n  ingestion_timestamp\nFROM discovery.silver.dmd_variants\nWHERE action_required IS NOT NULL\n   OR classification_conflict = true\nORDER BY ingestion_timestamp DESC",
+      "type": "SQL"
+    }
+  ]
+}

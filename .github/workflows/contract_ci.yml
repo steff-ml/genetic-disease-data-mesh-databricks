@@ -1,0 +1,243 @@
+name: Contract & Pipeline CI
+
+# Runs on every PR that touches a pipeline, contract, or hub template.
+# Blocks merge if contract drift is detected or unit tests fail.
+#
+# Required repository secrets:
+#   DATABRICKS_HOST         — workspace URL, e.g. https://dbc-xxxx.cloud.databricks.com
+#   DATABRICKS_TOKEN        — service principal PAT with READ on all Gold catalogs
+#                             (create a dedicated CI service principal — never use a personal token)
+#   DATABRICKS_CLIENT_ID    — service principal OAuth client ID (preferred over PAT)
+#   DATABRICKS_CLIENT_SECRET — service principal OAuth secret
+#
+# Required repository variables (Settings → Variables → Actions):
+#   DATABRICKS_PROFILE      — connection profile name, e.g. "ci"
+
+on:
+  pull_request:
+    paths:
+      # Trigger on any pipeline, contract, hub template, or bundle config change
+      - "**/*pipeline*.py"
+      - "**/*dlt*.py"
+      - "docs/contracts/**/*.yaml"
+      - "hub/templates/**/*.py"
+      - "hub/templates/**/*.yml"
+      - "**/databricks.yml"
+      - "**/resources/*.yml"
+      - "requirements.txt"
+
+  # Allow manual trigger for debugging
+  workflow_dispatch:
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Job 1: Validate Databricks Asset Bundle syntax
+  # Catches YAML errors in databricks.yml and resources/*.yml before deployment.
+  # Does not require a live workspace connection.
+  # ---------------------------------------------------------------------------
+  bundle-validate:
+    name: Validate DAB bundle syntax
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Databricks CLI
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
+
+      - name: Validate root bundle
+        run: databricks bundle validate
+        env:
+          DATABRICKS_HOST:  ${{ secrets.DATABRICKS_HOST }}
+          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+
+      - name: Validate trial_eligibility_catalogue bundle
+        working-directory: trial_eligibility_catalogue
+        run: databricks bundle validate
+        env:
+          DATABRICKS_HOST:  ${{ secrets.DATABRICKS_HOST }}
+          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+
+  # ---------------------------------------------------------------------------
+  # Job 2: Unit tests
+  # Runs pytest against the pipeline test suites.
+  # Tests must not require a live cluster — use fixtures and mocks.
+  # ---------------------------------------------------------------------------
+  unit-tests:
+    name: Unit tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run unit tests — trial_eligibility_catalogue
+        working-directory: trial_eligibility_catalogue
+        run: pytest tests/ -v --tb=short
+
+  # ---------------------------------------------------------------------------
+  # Job 3: Contract compliance check
+  # Runs contract_check.py for every contract file that changed in this PR.
+  # Requires a live Unity Catalog connection via a CI service principal.
+  # Fails if any column is missing, any type mismatches, or quality rule gaps exist.
+  #
+  # This job is skipped if no contract YAML files changed — it does not re-check
+  # contracts that were not touched by this PR.
+  # ---------------------------------------------------------------------------
+  contract-check:
+    name: Contract compliance
+    runs-on: ubuntu-latest
+    # Only run if a contract file was changed
+    if: >
+      contains(github.event.pull_request.changed_files, 'docs/contracts') ||
+      contains(github.event.pull_request.changed_files, 'pipeline')
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt pyyaml
+
+      - name: Configure Databricks connection profile
+        run: |
+          mkdir -p ~/.databrickscfg
+          cat >> ~/.databrickscfg << EOF
+          [ci]
+          host  = ${{ secrets.DATABRICKS_HOST }}
+          token = ${{ secrets.DATABRICKS_TOKEN }}
+          EOF
+        # For OAuth (preferred over PAT for service principals):
+        # client_id     = ${{ secrets.DATABRICKS_CLIENT_ID }}
+        # client_secret = ${{ secrets.DATABRICKS_CLIENT_SECRET }}
+
+      - name: Detect changed contract files
+        id: changed-contracts
+        run: |
+          git diff --name-only origin/${{ github.base_ref }}...HEAD \
+            | grep '^docs/contracts/.*\.yaml$' \
+            | grep -v '_template' \
+            > changed_contracts.txt
+          cat changed_contracts.txt
+
+      - name: Run contract check for each changed contract
+        run: |
+          while IFS= read -r contract_file; do
+            echo "::group::Checking $contract_file"
+            # Derive the matching pipeline file path from the contract name
+            table_name=$(basename "$contract_file" .yaml)
+            pipeline_file=$(find . -name "*${table_name}*pipeline*.py" -not -path "*/.venv/*" | head -1)
+
+            if [ -n "$pipeline_file" ]; then
+              python hub/templates/contract_check.py \
+                --contract "$contract_file" \
+                --pipeline "$pipeline_file"
+            else
+              python hub/templates/contract_check.py \
+                --contract "$contract_file"
+            fi
+            echo "::endgroup::"
+          done < changed_contracts.txt
+
+  # ---------------------------------------------------------------------------
+  # Job 4: Audit trail property check
+  # Verifies that all Gold tables modified by this PR have the required
+  # 21 CFR Part 11 Delta properties set. Warns (does not block) if a table
+  # does not yet exist (i.e. it is being created for the first time).
+  # ---------------------------------------------------------------------------
+  audit-trail-check:
+    name: 21 CFR Part 11 property check
+    runs-on: ubuntu-latest
+    # Only runs when a Gold pipeline file changed
+    if: contains(github.event.pull_request.changed_files, 'gold')
+    continue-on-error: true  # warn only — does not block merge
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Configure Databricks connection
+        run: |
+          mkdir -p ~/.databrickscfg
+          cat >> ~/.databrickscfg << EOF
+          [ci]
+          host  = ${{ secrets.DATABRICKS_HOST }}
+          token = ${{ secrets.DATABRICKS_TOKEN }}
+          EOF
+
+      - name: Check Gold schema compliance
+        run: |
+          # Adjust catalog and schema to match your Gold targets
+          python hub/templates/audit_trail_config.py \
+            --catalog clinical \
+            --schema gold \
+            --check-schema
+          python hub/templates/audit_trail_config.py \
+            --catalog discovery \
+            --schema gold \
+            --check-schema
+
+  # ---------------------------------------------------------------------------
+  # Job 5: HGVS normalization smoke test
+  # Validates that the HGVS normalization function handles the known-tricky
+  # LOVD legacy notation and ClinVar formats without raising exceptions.
+  # Runs only when a variant pipeline file changes.
+  # ---------------------------------------------------------------------------
+  hgvs-smoke-test:
+    name: HGVS normalization smoke test
+    runs-on: ubuntu-latest
+    if: >
+      contains(github.event.pull_request.changed_files, 'variant') ||
+      contains(github.event.pull_request.changed_files, 'lovd') ||
+      contains(github.event.pull_request.changed_files, 'clinvar')
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install HGVS dependencies
+        run: pip install hgvs biocommons.seqrepo
+
+      - name: Run HGVS normalization smoke test
+        run: python -c "
+          import sys
+          sys.path.insert(0, 'hub/templates')
+          from hgvs_normalization import normalize_hgvs, NormalizationResult
+          test_cases = [
+              ('NM_004006.2:c.6439del',         'strict'),
+              ('c.(?_432-1)_(6438+1_?)del',     'lenient'),
+              ('c.?',                            'unparseable'),
+          ]
+          for notation, expected_strategy in test_cases:
+              result = normalize_hgvs(notation)
+              assert result.strategy == expected_strategy, f'{notation}: expected {expected_strategy}, got {result.strategy}'
+              print(f'OK  {notation[:50]:<52} → {result.strategy}')
+          print('HGVS smoke test passed.')
+          "

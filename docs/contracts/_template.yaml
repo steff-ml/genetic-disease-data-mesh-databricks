@@ -1,0 +1,280 @@
+# Bitol Open Data Contract Standard (ODCS) v3.0.0
+# https://bitol.io/open-data-contract-standard/
+#
+# Usage: copy this file to docs/contracts/{table_name}.yaml and fill in all
+# <PLACEHOLDER> values. Remove comments that no longer apply. The contract-drafter
+# Claude Code agent can pre-populate this from a DLT table definition.
+#
+# Required before a Gold table is promoted to "active" status:
+#   - All <PLACEHOLDER> values replaced
+#   - At least one quality rule per NOT NULL column
+#   - servicelevels.freshness matches the pipeline schedule in the DAB
+#   - Owner email is a monitored distribution list, not an individual
+
+apiVersion: v3.0.0
+kind: DataContract
+
+# ---------------------------------------------------------------------------
+# Identity
+# ---------------------------------------------------------------------------
+id: <UUID-v4>                       # generate with: python -c "import uuid; print(uuid.uuid4())"
+name: <table_name>                  # snake_case, matches Unity Catalog table name
+version: 0.1.0                      # semver; bump minor on schema additions, major on breaking changes
+status: draft                       # draft | active | deprecated | retired
+
+# ---------------------------------------------------------------------------
+# Ownership and domain
+# ---------------------------------------------------------------------------
+domain: <clinical|discovery>        # the data mesh domain this product belongs to
+dataProduct: <gold_product_name>    # e.g. trial_eligibility_catalogue
+
+owner:
+  team: <team_name>                 # e.g. "Discovery Data Engineering"
+  email: <team_email>               # monitored distribution list
+
+# ---------------------------------------------------------------------------
+# Description — explain the product to a consumer who has not read the code
+# ---------------------------------------------------------------------------
+description:
+  purpose: >
+    <One paragraph: what this table contains, what scientific or clinical question
+    it answers, and which eligibility matching layer it feeds (Layer 1 mutation-
+    intrinsic / Layer 2 approach-specific / Layer 3 patient-level).>
+
+  usage: >
+    <Who uses this table and for what queries. Name the downstream Gold products
+    or applications that consume it. E.g.: "Consumed by patient_trial_eligibility
+    to produce per-patient eligibility verdicts.">
+
+  limitations: >
+    <Known gaps, exclusions, or caveats a consumer must be aware of. E.g.:
+    "Eligibility criteria are parsed from free-text blobs — extraction confidence
+    scores are provided but not guaranteed. Patient-level criteria (age, AAV
+    antibody titres) are flagged as requiring clinical input and are not resolved
+    by this product.">
+
+# ---------------------------------------------------------------------------
+# Links to documentation and architecture decisions
+# ---------------------------------------------------------------------------
+links:
+  - rel: documentation
+    url: docs/data-products.md
+  - rel: scientific-background
+    url: docs/scientific_background.md
+  - rel: adr
+    url: docs/adr/<relevant_adr>.md  # e.g. adr_06.md for conflict detection rules
+
+# ---------------------------------------------------------------------------
+# Tags — for Unity Catalog discoverability
+# ---------------------------------------------------------------------------
+tags:
+  - dmd
+  - rare-disease
+  - gold
+  - <domain>                        # clinical or discovery
+  - <additional_tags>               # e.g. mutation-classification, eligibility-matching
+
+# ---------------------------------------------------------------------------
+# Server — where the data lives
+# ---------------------------------------------------------------------------
+servers:
+  production:
+    type: databricks_unity_catalog
+    catalog: <clinical|discovery>
+    schema: gold
+    table: <table_name>
+    format: delta
+
+# ---------------------------------------------------------------------------
+# Schema — one entry per column
+#
+# type values: string, long, integer, double, boolean, date, timestamp, array, struct
+# tags on columns: primary-key, foreign-key, pii, phi, audit, classification,
+#                  reading-frame, eligibility, provenance, quality-flag
+# ---------------------------------------------------------------------------
+models:
+  - name: <table_name>
+    type: table
+    description: <one-line table description>
+    primaryKey:
+      - <pk_column>
+
+    columns:
+
+      # --- Primary identifier ---
+      - name: <pk_column>
+        type: string
+        required: true
+        unique: true
+        description: >
+          <What this identifier represents. Where it comes from (e.g. ClinVar
+          variation ID, LOVD DBID). Why it is stable or not.>
+        tags:
+          - primary-key
+
+      # --- Core scientific fields ---
+      # Add one block per column. Annotate with clinical meaning, not just data type.
+
+      - name: <column_name>
+        type: <type>
+        required: <true|false>
+        description: >
+          <Clinical meaning of this field. How it maps to the reading frame rule,
+          eligibility layer, or ADR-06 conflict detection as applicable.>
+        tags:
+          - <tag>
+
+      # --- Quality flags (Silver-derived) ---
+      - name: classification_conflict
+        type: boolean
+        required: true
+        description: >
+          True when LOVD and ClinVar disagree on pathogenicity for the same variant.
+          Set per ADR-06. Records with this flag set must not be auto-promoted to
+          Gold without expert review.
+        tags:
+          - quality-flag
+
+      - name: action_required
+        type: string
+        required: false
+        description: >
+          Populated when a record requires human intervention before Gold promotion.
+          Values: 'expert_review' | 'manual_review' | null.
+          See ADR-06 for the rules that set this field.
+        tags:
+          - quality-flag
+
+      # --- ALCOA+ provenance (required on every Gold table) ---
+      - name: source_system
+        type: string
+        required: true
+        description: >
+          Originating Bronze source (e.g. 'lovd_shared', 'clinvar', 'ctgov').
+          Supports ALCOA+ Attributable principle.
+        tags:
+          - provenance
+
+      - name: ingestion_timestamp
+        type: timestamp
+        required: true
+        description: >
+          UTC timestamp when the Bronze record was written. Supports ALCOA+
+          Contemporaneous principle. Distinct from source record dates.
+        tags:
+          - provenance
+          - audit
+
+      - name: pipeline_version
+        type: string
+        required: true
+        description: >
+          Semver of the DLT pipeline that produced this row. Enables reproducibility
+          audits and rollback identification under 21 CFR Part 11.
+        tags:
+          - provenance
+          - audit
+
+# ---------------------------------------------------------------------------
+# Quality rules
+#
+# severity: error   → @dlt.expect_or_quarantine (record blocked from Gold)
+#           warning → @dlt.expect_or_warn       (record passes, alert raised)
+#
+# For each rule, the description must explain WHY the rule matters for the
+# pipeline, not just restate the constraint.
+# ---------------------------------------------------------------------------
+quality:
+
+  - rule: pk_not_null
+    description: >
+      Primary key must never be null. A null PK breaks all downstream joins in
+      patient_trial_eligibility and exon_skipping_eligibility.
+    column: <pk_column>
+    type: not_null
+    severity: error
+
+  - rule: pk_unique
+    description: >
+      Duplicate primary keys would cause fan-out in downstream joins, inflating
+      eligibility match counts and corrupting cohort sizing queries.
+    column: <pk_column>
+    type: unique
+    severity: error
+
+  - rule: <rule_name>
+    description: >
+      <Why this constraint matters for DMD eligibility matching or data integrity.
+      Reference the reading frame rule, ADR-06, or a specific downstream product
+      that breaks if this rule fails.>
+    column: <column>
+    type: <not_null|unique|custom>
+    customSql: >
+      <Optional: SQL expression for custom rules, e.g.
+      "reading_frame_effect IN ('in_frame', 'out_of_frame', 'unknown')">
+    severity: <error|warning>
+
+  - rule: action_required_values
+    description: >
+      action_required must be one of the defined values or null. An unexpected
+      value indicates a pipeline logic error that would silently suppress expert
+      review routing.
+    column: action_required
+    type: custom
+    customSql: "action_required IN ('expert_review', 'manual_review') OR action_required IS NULL"
+    severity: error
+
+  - rule: ingestion_timestamp_not_null
+    description: >
+      Every Gold row must carry a provenance timestamp for 21 CFR Part 11 audit
+      trail completeness. A null here breaks the ALCOA+ Contemporaneous requirement.
+    column: ingestion_timestamp
+    type: not_null
+    severity: error
+
+# ---------------------------------------------------------------------------
+# Service level agreement
+# ---------------------------------------------------------------------------
+servicelevels:
+
+  availability:
+    description: >
+      Gold tables must be queryable during business hours. Scheduled maintenance
+      windows must be communicated 48 hours in advance.
+    percentage: 99.0
+
+  freshness:
+    description: >
+      Matches the pipeline refresh cadence. Change this when the DAB schedule changes.
+    schedule: "<cron expression>"   # e.g. "0 6 * * 1" = weekly Monday 06:00 UTC
+    lag:
+      max: 24
+      unit: hours
+
+  completeness:
+    description: >
+      <What "complete" means for this specific table — e.g. "All DMD variants
+      with a confirmed pathogenicity classification in LOVD or ClinVar must be
+      present." Derive the threshold from known source record counts.>
+    percentage: 95.0
+
+  retention:
+    description: >
+      21 CFR Part 11 requires a minimum 7-year audit trail for clinical data.
+      Delta table history is the primary retention mechanism.
+    period: 7
+    unit: years
+
+  support:
+    description: Best-effort during business hours. No on-call SLA at current project stage.
+    responseTime: 2
+    unit: business_days
+
+# ---------------------------------------------------------------------------
+# Pricing (optional — complete if this product is distributed via Marketplace)
+# ---------------------------------------------------------------------------
+# pricing:
+#   priceAmount: 0
+#   priceCurrency: USD
+#   priceUnit: row
+#   description: Open access — no charge for non-commercial use.

@@ -1,0 +1,74 @@
+# Databricks App manifest — app.yaml
+#
+# This file lives at apps/patient_matcher/app.yaml alongside app.py.
+# It tells Databricks how to start the app and which resources it can access.
+#
+# The bundle (databricks.yml) references the whole directory:
+#   resources:
+#     apps:
+#       dmd_patient_matcher:
+#         source_code_path: ./apps/patient_matcher
+#
+# The app.yaml file in that directory provides the runtime configuration.
+#
+# DOCUMENTATION
+# =============
+# https://docs.databricks.com/en/dev-tools/databricks-apps/index.html
+# https://docs.databricks.com/en/dev-tools/bundles/resources.html#apps
+
+# ── Runtime command ──────────────────────────────────────────────────────────
+# Start the Streamlit application. The command runs from the source_code_path
+# directory. Adjust for other frameworks:
+#   Dash:    python app.py
+#   Gradio:  python app.py
+#   Flask:   gunicorn app:server --bind 0.0.0.0:${PORT}
+
+command:
+  - streamlit
+  - run
+  - app.py
+  - --server.port
+  - "8501"
+  - --server.address
+  - "0.0.0.0"
+  - --server.headless
+  - "true"
+
+# ── Resource declarations ────────────────────────────────────────────────────
+# Declare every Databricks resource the app needs at runtime.
+# The app's service principal is granted the declared permission automatically.
+# Do not put credentials in the app code — use these declarations instead.
+
+resources:
+  - name: mutation_catalogue_warehouse
+    description: "SQL warehouse for querying the DMD mutation catalogue Gold tables"
+    sql_warehouse:
+      id: "<replace-with-warehouse-id>"      # find in: Databricks > SQL Warehouses > Connection Details
+      permission: CAN_USE
+
+  # Uncomment if the app needs to run a job (e.g. trigger a pipeline refresh):
+  # - name: dlt_discovery_pipeline
+  #   job:
+  #     id: "<replace-with-job-id>"
+  #     permission: CAN_MANAGE_RUN
+
+# ── Environment variables ────────────────────────────────────────────────────
+# Inject non-secret configuration as env vars. Secrets must come from
+# Databricks Secret Scopes (dbutils.secrets.get), not from here.
+
+env:
+  - name: APP_NAME
+    value: "DMD Patient Therapy Matcher"
+
+  - name: GOLD_CATALOG
+    value: "discovery"
+
+  - name: GOLD_SCHEMA
+    value: "gold"
+
+  - name: CLINICAL_CATALOG
+    value: "clinical"
+
+  # Do NOT put tokens or passwords here. Use:
+  #   dbutils.secrets.get(scope="app_secrets", key="fhir_token")
+  # in the app code for sensitive values.
